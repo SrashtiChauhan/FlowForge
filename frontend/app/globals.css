@@ -1,2 +1,43 @@
 @import "tailwindcss";
 
+:root {
+	--bg-page: #f5f7f2;
+	--bg-panel: #ffffff;
+	--bg-soft: #eef2e7;
+	--text-main: #1d2a20;
+	--text-muted: #5d6d62;
+	--accent: #0f766e;
+	--accent-strong: #115e59;
+	--line: #dbe4d5;
+}
+
+body {
+	background: radial-gradient(circle at 20% 10%, #ecf7ef 0%, transparent 30%),
+		radial-gradient(circle at 80% 0%, #fff3db 0%, transparent 35%),
+		var(--bg-page);
+	color: var(--text-main);
+}
+
+.panel {
+	background: var(--bg-panel);
+	border: 1px solid var(--line);
+	border-radius: 16px;
+	box-shadow: 0 8px 30px rgba(22, 38, 28, 0.06);
+}
+
+.chip {
+	border: 1px solid var(--line);
+	background: var(--bg-soft);
+	color: var(--text-muted);
+	border-radius: 999px;
+}
+
+.accent-btn {
+	background: var(--accent);
+	color: #ffffff;
+}
+
+.accent-btn:hover {
+	background: var(--accent-strong);
+}
+

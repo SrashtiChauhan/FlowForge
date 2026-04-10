@@ -1,56 +1,64 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Plus, CalendarClock, Users } from "lucide-react";
 
 const projects = [
   {
     name: "FlowForge Core",
     desc: "Main collaboration workspace",
+    members: 6,
+    due: "Apr 21",
   },
   {
     name: "AI Debug Tool",
     desc: "Debugging assistant module",
+    members: 4,
+    due: "Apr 18",
   },
   {
     name: "Chat System",
     desc: "Real-time communication module",
+    members: 5,
+    due: "Apr 26",
   },
 ];
 
 export default function ProjectsPage() {
   return (
-    <div>
+    <div className="mx-auto w-full max-w-6xl p-4 md:p-10">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="chip inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wide">Portfolio</p>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Projects</h1>
+        </div>
 
-      {/* Top Section */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Projects</h1>
-
-        <button className="flex items-center gap-2 bg-indigo-600 px-4 py-2 rounded-lg hover:bg-indigo-500">
+        <button className="accent-btn flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition">
           <Plus size={18} />
           New Project
         </button>
       </div>
 
-      {/* Project Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
         {projects.map((project, index) => (
           <div
             key={index}
-            className="bg-zinc-900 p-5 rounded-xl border border-zinc-800 hover:border-indigo-500 transition cursor-pointer"
+            className="panel cursor-pointer p-5 transition hover:-translate-y-1"
           >
-            <h2 className="text-lg font-semibold mb-2">
-              {project.name}
-            </h2>
+            <h2 className="mb-2 text-lg font-semibold text-slate-900">{project.name}</h2>
 
-            <p className="text-sm text-zinc-400">
-              {project.desc}
-            </p>
+            <p className="text-sm text-slate-600">{project.desc}</p>
+
+            <div className="mt-4 flex items-center gap-4 text-sm text-slate-600">
+              <span className="flex items-center gap-1">
+                <Users size={15} /> {project.members} members
+              </span>
+              <span className="flex items-center gap-1">
+                <CalendarClock size={15} /> {project.due}
+              </span>
+            </div>
           </div>
         ))}
-
       </div>
-
     </div>
   );
 }

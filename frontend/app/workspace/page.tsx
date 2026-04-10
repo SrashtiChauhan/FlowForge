@@ -14,47 +14,39 @@ const activities = [
 
 export default function WorkspacePage() {
   return (
-    <div className="grid grid-cols-3 gap-6">
-
-      {/* Left: Active Users */}
-      <div className="col-span-1 bg-zinc-900 p-4 rounded-xl border border-zinc-800">
-        <h2 className="text-lg font-semibold mb-4">Active Developers</h2>
+    <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-6 p-4 md:grid-cols-3 md:p-10">
+      <div className="panel p-4 md:col-span-1">
+        <h2 className="mb-4 text-lg font-semibold text-slate-900">Active Developers</h2>
 
         <div className="space-y-3">
           {users.map((user, i) => (
-            <div
-              key={i}
-              className="bg-zinc-800 p-3 rounded-lg"
-            >
-              <p className="font-medium">{user.name}</p>
-              <p className="text-sm text-zinc-400">{user.status}</p>
+            <div key={i} className="rounded-lg border border-(--line) bg-(--bg-soft) p-3">
+              <p className="font-medium text-slate-900">{user.name}</p>
+              <p className="text-sm text-slate-600">{user.status}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Center: Workspace */}
-      <div className="col-span-2 bg-zinc-900 p-6 rounded-xl border border-zinc-800">
-        <h2 className="text-lg font-semibold mb-4">Workspace</h2>
+      <div className="panel p-6 md:col-span-2">
+        <h2 className="mb-4 text-lg font-semibold text-slate-900">Workspace</h2>
 
-        <div className="h-64 flex items-center justify-center text-zinc-500">
-          Live workspace coming soon 🚀
+        <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-(--line) bg-(--bg-soft) text-slate-600">
+          Live workspace preview coming soon
         </div>
       </div>
 
-      {/* Bottom: Activity Feed */}
-      <div className="col-span-3 bg-zinc-900 p-4 rounded-xl border border-zinc-800">
-        <h2 className="text-lg font-semibold mb-4">Activity Feed</h2>
+      <div className="panel p-4 md:col-span-3">
+        <h2 className="mb-4 text-lg font-semibold text-slate-900">Activity Feed</h2>
 
-        <ul className="space-y-2 text-zinc-300">
+        <ul className="space-y-2 text-slate-700">
           {activities.map((activity, i) => (
-            <li key={i} className="bg-zinc-800 p-2 rounded-lg">
+            <li key={i} className="rounded-lg border border-(--line) bg-(--bg-soft) p-3">
               {activity}
             </li>
           ))}
         </ul>
       </div>
-
     </div>
   );
 }

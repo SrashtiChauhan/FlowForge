@@ -1,5 +1,8 @@
 import "./globals.css";
 import Sidebar from "./components/Sidebar";
+import { Space_Grotesk } from "next/font/google";
+
+const spaceGrotesk = Space_Grotesk({ subsets: ["latin"] });
 
 export default function RootLayout({
   children,
@@ -8,14 +11,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="flex bg-zinc-950 text-white">
-        
+      <body className={`${spaceGrotesk.className} min-h-screen md:flex`}>
         <Sidebar />
 
-        <main className="flex-1 p-6">
+        <main className="w-full p-4 md:flex-1 md:p-8">
           {children}
         </main>
-
       </body>
     </html>
   );

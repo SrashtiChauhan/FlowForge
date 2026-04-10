@@ -8,33 +8,28 @@ const messages = [
 
 export default function ChatPage() {
   return (
-    <div className="flex flex-col h-[80vh]">
+    <div className="mx-auto flex h-[80vh] w-full max-w-5xl flex-col p-4 md:p-10">
+      <h1 className="mb-4 text-3xl font-bold tracking-tight text-slate-900">Team Chat</h1>
 
-      {/* Header */}
-      <h1 className="text-2xl font-bold mb-4">Team Chat</h1>
-
-      {/* Messages */}
-      <div className="flex-1 bg-zinc-900 p-4 rounded-xl border border-zinc-800 overflow-y-auto space-y-3">
+      <div className="panel flex-1 space-y-3 overflow-y-auto p-4">
         {messages.map((msg, i) => (
-          <div key={i} className="bg-zinc-800 p-3 rounded-lg">
-            <p className="font-semibold">{msg.user}</p>
-            <p className="text-zinc-300 text-sm">{msg.text}</p>
+          <div key={i} className="rounded-lg border border-(--line) bg-(--bg-soft) p-3">
+            <p className="font-semibold text-slate-900">{msg.user}</p>
+            <p className="text-sm text-slate-700">{msg.text}</p>
           </div>
         ))}
       </div>
 
-      {/* Input */}
       <div className="mt-4 flex gap-2">
         <input
           type="text"
           placeholder="Type a message..."
-          className="flex-1 p-2 rounded-lg bg-zinc-800 border border-zinc-700"
+          className="flex-1 rounded-lg border border-(--line) bg-white p-3 text-slate-900 outline-none ring-teal-600/20 placeholder:text-slate-400 focus:ring"
         />
-        <button className="bg-indigo-600 px-4 rounded-lg hover:bg-indigo-500">
+        <button className="accent-btn rounded-lg px-5 font-semibold transition">
           Send
         </button>
       </div>
-
     </div>
   );
 }

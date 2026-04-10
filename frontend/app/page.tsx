@@ -2,18 +2,44 @@ import Link from "next/link";
 
 export default function HomePage() {
 	return (
-		<main className="min-h-screen bg-gray-100 p-10">
-			<div className="mx-auto max-w-3xl rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
-				<h1 className="text-3xl font-bold text-gray-900">FlowForge</h1>
-				<p className="mt-2 text-gray-600">Welcome. Start from the dashboard to access your pages.</p>
+		<main className="mx-auto grid min-h-[calc(100vh-6rem)] w-full max-w-6xl items-center gap-8 p-4 md:grid-cols-2 md:p-10">
+			<section>
+				<p className="chip inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wide">Team Workflow</p>
+				<h1 className="mt-4 text-4xl font-bold tracking-tight text-slate-900 md:text-6xl">Build faster with shared momentum.</h1>
+				<p className="mt-4 max-w-lg text-base text-slate-600 md:text-lg">
+					FlowForge keeps your projects, workspace updates, and team chat in one focused command center.
+				</p>
 
-				<Link
-					href="/dashboard"
-					className="mt-6 inline-block rounded-md bg-gray-900 px-4 py-2 text-white transition hover:bg-gray-800"
-				>
-					Open Dashboard
-				</Link>
-			</div>
+				<div className="mt-7 flex flex-wrap gap-3">
+					<Link href="/dashboard" className="accent-btn rounded-xl px-5 py-3 text-sm font-semibold transition">
+						Open Dashboard
+					</Link>
+					<Link
+						href="/projects"
+						className="rounded-xl border border-(--line) bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+					>
+						View Projects
+					</Link>
+				</div>
+			</section>
+
+			<section className="panel p-6 md:p-8">
+				<h2 className="text-xl font-semibold text-slate-900">Today at a glance</h2>
+				<div className="mt-5 grid gap-4 sm:grid-cols-3 md:grid-cols-1">
+					<div className="rounded-xl bg-(--bg-soft) p-4">
+						<p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Active Projects</p>
+						<p className="mt-2 text-2xl font-bold text-slate-900">12</p>
+					</div>
+					<div className="rounded-xl bg-(--bg-soft) p-4">
+						<p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Open Tasks</p>
+						<p className="mt-2 text-2xl font-bold text-slate-900">34</p>
+					</div>
+					<div className="rounded-xl bg-(--bg-soft) p-4">
+						<p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Team Online</p>
+						<p className="mt-2 text-2xl font-bold text-slate-900">7</p>
+					</div>
+				</div>
+			</section>
 		</main>
 	);
 }

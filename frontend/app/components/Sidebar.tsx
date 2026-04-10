@@ -2,39 +2,42 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LayoutDashboard, FolderKanban, Blocks, MessageSquare } from "lucide-react";
 
 export default function Sidebar() {
   const pathname = usePathname();
 
+  const navItems = [
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/projects", label: "Projects", icon: FolderKanban },
+    { href: "/workspace", label: "Workspace", icon: Blocks },
+    { href: "/chat", label: "Chat", icon: MessageSquare },
+  ];
+
   const linkClass = (path: string) =>
-    `block px-3 py-2 rounded-lg ${
+    `flex items-center gap-2 rounded-xl px-3 py-2 transition ${
       pathname === path
-        ? "bg-indigo-600 text-white"
-        : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
+        ? "bg-teal-700 text-white shadow-sm"
+        : "text-slate-700 hover:bg-slate-200"
     }`;
 
   return (
-    <aside className="w-64 h-screen bg-zinc-900 p-4">
-      <h1 className="text-2xl font-bold text-indigo-500 mb-6">
-        FlowForge
-      </h1>
+    <aside className="panel sticky top-0 z-20 m-4 mb-0 p-3 md:m-6 md:mb-6 md:h-[calc(100vh-3rem)] md:w-64 md:p-4">
+      <div className="mb-4 flex items-center justify-between md:mb-6 md:block">
+        <h1 className="text-xl font-bold tracking-tight text-slate-900 md:text-2xl">FlowForge</h1>
+        <span className="chip px-3 py-1 text-xs font-semibold">v1</span>
+      </div>
 
-      <nav className="flex flex-col gap-2">
-        <Link href="/dashboard" className={linkClass("/dashboard")}>
-          Dashboard
-        </Link>
-
-        <Link href="/projects" className={linkClass("/projects")}>
-          Projects
-        </Link>
-
-        <Link href="/workspace" className={linkClass("/workspace")}>
-          Workspace
-        </Link>
-
-        <Link href="/chat" className={linkClass("/chat")}>
-          Chat
-        </Link>
+      <nav className="grid grid-cols-2 gap-2 md:grid-cols-1">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link key={item.href} href={item.href} className={linkClass(item.href)}>
+              <Icon size={16} />
+              <span className="text-sm font-medium">{item.label}</span>
+            </Link>
+          );
+        })}
       </nav>
     </aside>
   );
