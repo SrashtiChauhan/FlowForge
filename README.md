@@ -117,6 +117,19 @@ DATABASE_URL=your_database_url
 
 ---
 
+## Deploying On Vercel
+
+For Vercel, the deployable Next.js app lives in `frontend/`.
+
+Two supported setups:
+
+1. Import the repository in Vercel and set the **Root Directory** to `frontend`.
+2. Deploy the repository root with the included root `package.json` and `vercel.json`, which forward the build to the frontend workspace.
+
+If your existing Vercel project was imported from the repository root and shows a 404, update the project's **Root Directory** to `frontend` or redeploy after pulling these config changes.
+
+---
+
 ## 🚧 Development Status
 
 **Current Phase:** Initial Setup
