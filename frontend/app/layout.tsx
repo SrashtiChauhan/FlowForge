@@ -1,16 +1,21 @@
-// import page from './page.tsx';
+import "./globals.css";
+import Sidebar from "./components/Sidebar";
 
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
-      <head>
-        <title>Next.js + Tailwind CSS Starter</title>
-        <meta name="description" content="A starter template for Next.js with Tailwind CSS and TypeScript." />
-        <link rel="icon" href="/favicon.ico" />
-      </head>
-      <body className="bg-gray-100">
-        {children}
+      <body className="flex bg-zinc-950 text-white">
+        
+        <Sidebar />
+
+        <main className="flex-1 p-6">
+          {children}
+        </main>
+
       </body>
     </html>
   );
