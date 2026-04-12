@@ -1,6 +1,8 @@
 "use client";
 
 import { Plus, CalendarClock, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { isSupabaseConfigured, supabase } from "@/app/lib/supabase";
 
 const projects = [
   {
@@ -24,6 +26,24 @@ const projects = [
 ];
 
 export default function ProjectsPage() {
+  const router = useRouter();
+
+  const handleNewProject = async () => {
+    if (!isSupabaseConfigured || !supabase) {
+      router.push("/login?next=/projects");
+      return;
+    }
+
+    const { data, error } = await supabase.auth.getSession();
+
+    if (error || !data.session) {
+      router.push("/login?next=/projects");
+      return;
+    }
+
+    alert("You are logged in. Project creation form is the next step to add.");
+  };
+
   return (
     <div className="mx-auto w-full max-w-6xl p-4 md:p-10">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
@@ -32,7 +52,10 @@ export default function ProjectsPage() {
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Projects</h1>
         </div>
 
-        <button className="accent-btn flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition">
+        <button
+          onClick={handleNewProject}
+          className="accent-btn flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition"
+        >
           <Plus size={18} />
           New Project
         </button>

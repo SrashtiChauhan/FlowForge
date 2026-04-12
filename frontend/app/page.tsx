@@ -21,6 +21,15 @@ export default function HomePage() {
 						View Projects
 					</Link>
 				</div>
+
+				<div className="mt-4 flex gap-4 text-sm font-medium text-slate-600">
+					<Link href="/login" className="hover:text-slate-900">
+						Login
+					</Link>
+					<Link href="/signup" className="hover:text-slate-900">
+						Sign up
+					</Link>
+				</div>
 			</section>
 
 			<section className="panel p-6 md:p-8">
