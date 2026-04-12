@@ -1,8 +1,14 @@
 import "./globals.css";
 import Sidebar from "./components/Sidebar";
 import { Space_Grotesk } from "next/font/google";
+import type { Metadata } from "next";
 
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "FlowForge",
+  description: "Team workflow command center",
+};
 
 export default function RootLayout({
   children,
