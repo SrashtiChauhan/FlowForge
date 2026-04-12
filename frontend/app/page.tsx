@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function HomePage() {
 	return (
-		<main className="mx-auto grid min-h-[calc(100vh-6rem)] w-full max-w-6xl items-center gap-8 p-4 md:grid-cols-2 md:p-10">
+		<div className="mx-auto grid min-h-[calc(100vh-6rem)] w-full max-w-6xl items-center gap-8 p-4 md:grid-cols-2 md:p-10">
 			<section>
 				<p className="chip inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wide">Team Workflow</p>
 				<h1 className="mt-4 text-4xl font-bold tracking-tight text-slate-900 md:text-6xl">Build faster with shared momentum.</h1>
@@ -40,6 +40,6 @@ export default function HomePage() {
 					</div>
 				</div>
 			</section>
-		</main>
+		</div>
 	);
 }
