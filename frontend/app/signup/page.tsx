@@ -1,15 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { isSupabaseConfigured, supabase } from "@/app/lib/supabase";
 
 export default function Signup() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const nextPath = searchParams.get("next");
 
   const handleSignup = async () => {
     if (!supabase) {
@@ -32,7 +35,7 @@ export default function Signup() {
     if (error) alert(error.message);
     else {
       alert("Signup successful! Please check your email to confirm your account.");
-      router.push("/login");
+      router.push(nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : "/login");
     }
   };
 
@@ -70,7 +73,7 @@ export default function Signup() {
 
         <p className="mt-4 text-center text-sm text-zinc-300">
           Already have an account?{" "}
-          <Link href="/login" className="text-indigo-400 hover:text-indigo-300">
+          <Link href={nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : "/login"} className="text-indigo-400 hover:text-indigo-300">
             Login
           </Link>
         </p>

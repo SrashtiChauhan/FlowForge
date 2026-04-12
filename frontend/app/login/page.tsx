@@ -1,15 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { isSupabaseConfigured, supabase } from "@/app/lib/supabase";
 
 export default function Login() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const nextPath = searchParams.get("next");
+  const redirectPath = nextPath && nextPath.startsWith("/") ? nextPath : "/dashboard";
 
   const handleLogin = async () => {
     if (!supabase) {
@@ -30,7 +34,7 @@ export default function Login() {
     setLoading(false);
 
     if (error) alert(error.message);
-    else router.push("/dashboard");
+    else router.push(redirectPath);
   };
 
   return (
@@ -67,7 +71,7 @@ export default function Login() {
 
         <p className="mt-4 text-center text-sm text-zinc-300">
           New here?{" "}
-          <Link href="/signup" className="text-indigo-400 hover:text-indigo-300">
+          <Link href={nextPath ? `/signup?next=${encodeURIComponent(nextPath)}` : "/signup"} className="text-indigo-400 hover:text-indigo-300">
             Create an account
           </Link>
         </p>
