@@ -1,0 +1,8 @@
+# Ignore local dev/build artefacts from Vercel uploads
+.next/
+node_modules/
+.env*.local
+.env
+*.log
+coverage/
+.DS_Store
