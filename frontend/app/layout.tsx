@@ -1,14 +1,5 @@
 import "./globals.css";
-import Sidebar from "./components/Sidebar";
-import { Space_Grotesk } from "next/font/google";
-import type { Metadata } from "next";
-
-const spaceGrotesk = Space_Grotesk({ subsets: ["latin"] });
-
-export const metadata: Metadata = {
-  title: "FlowForge",
-  description: "Team workflow command center",
-};
+import AppShell from "@/app/components/AppShell";
 
 export default function RootLayout({
   children,
@@ -17,12 +8,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${spaceGrotesk.className} min-h-screen md:flex`}>
-        <Sidebar />
-
-        <main className="w-full p-4 md:flex-1 md:p-8">
-          {children}
-        </main>
+      <body>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );
