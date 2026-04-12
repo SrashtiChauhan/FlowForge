@@ -5,21 +5,31 @@ import { supabase } from "../lib/supabase";
 import { useRouter } from "next/navigation";
 
 export function useAuth() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any>(null);
   const router = useRouter();
 
   useEffect(() => {
-    const checkUser = async () => {
+    const getUser = async () => {
       const { data } = await supabase.auth.getUser();
 
       if (!data.user) {
-        router.push("/login"); // 🔐 protect
+        router.push("/login");
       } else {
         setUser(data.user);
       }
     };
 
-    checkUser();
+    getUser();
+
+    // 🔥 Listen for auth changes
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (!session) router.push("/login");
+        else setUser(session.user);
+      }
+    );
+
+    return () => listener.subscription.unsubscribe();
   }, []);
 
   return user;
