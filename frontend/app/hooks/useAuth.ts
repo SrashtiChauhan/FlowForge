@@ -9,8 +9,15 @@ export function useAuth() {
   const router = useRouter();
 
   useEffect(() => {
+    const client = supabase;
+
+    if (!client) {
+      router.push("/login");
+      return;
+    }
+
     const getUser = async () => {
-      const { data } = await supabase.auth.getUser();
+      const { data } = await client.auth.getUser();
 
       if (!data.user) {
         router.push("/login");
@@ -22,7 +29,7 @@ export function useAuth() {
     getUser();
 
     // 🔥 Listen for auth changes
-    const { data: listener } = supabase.auth.onAuthStateChange(
+    const { data: listener } = client.auth.onAuthStateChange(
       (_event, session) => {
         if (!session) router.push("/login");
         else setUser(session.user);
@@ -30,7 +37,7 @@ export function useAuth() {
     );
 
     return () => listener.subscription.unsubscribe();
-  }, []);
+  }, [router]);
 
   return user;
 }

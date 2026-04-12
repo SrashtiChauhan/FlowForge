@@ -1,19 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { isSupabaseConfigured, supabase } from "@/app/lib/supabase";
 
 export default function Login() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [nextPath, setNextPath] = useState<string | null>(null);
 
-  const nextPath = searchParams.get("next");
   const redirectPath = nextPath && nextPath.startsWith("/") ? nextPath : "/dashboard";
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setNextPath(params.get("next"));
+  }, []);
 
   const handleLogin = async () => {
     if (!supabase) {

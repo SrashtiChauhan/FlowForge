@@ -1,18 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { isSupabaseConfigured, supabase } from "@/app/lib/supabase";
 
 export default function Signup() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [nextPath, setNextPath] = useState<string | null>(null);
 
-  const nextPath = searchParams.get("next");
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setNextPath(params.get("next"));
+  }, []);
 
   const handleSignup = async () => {
     if (!supabase) {

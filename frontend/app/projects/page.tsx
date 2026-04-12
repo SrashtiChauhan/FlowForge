@@ -3,6 +3,7 @@
 import { Plus, CalendarClock, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { isSupabaseConfigured, supabase } from "@/app/lib/supabase";
+import { useState } from "react";
 
 const projects = [
   {
@@ -27,6 +28,7 @@ const projects = [
 
 export default function ProjectsPage() {
   const router = useRouter();
+  const [creating, setCreating] = useState(false);
 
   const handleNewProject = async () => {
     if (!isSupabaseConfigured || !supabase) {
@@ -41,7 +43,30 @@ export default function ProjectsPage() {
       return;
     }
 
-    alert("You are logged in. Project creation form is the next step to add.");
+    const name = window.prompt("Project name");
+    if (!name?.trim()) return;
+
+    const desc = window.prompt("Project description (optional)") || "";
+
+    setCreating(true);
+    const response = await fetch("/api/projects", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${data.session.access_token}`,
+      },
+      body: JSON.stringify({ name: name.trim(), desc: desc.trim() }),
+    });
+    setCreating(false);
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      alert(result.error || "Failed to create project");
+      return;
+    }
+
+    alert(`Project created: ${result.project.name}`);
   };
 
   return (
@@ -54,10 +79,11 @@ export default function ProjectsPage() {
 
         <button
           onClick={handleNewProject}
+          disabled={creating}
           className="accent-btn flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition"
         >
           <Plus size={18} />
-          New Project
+          {creating ? "Creating..." : "New Project"}
         </button>
       </div>
 
