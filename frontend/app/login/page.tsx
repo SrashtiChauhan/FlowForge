@@ -30,6 +30,11 @@ export default function Login() {
       return;
     }
 
+    if (!supabase) {
+      alert("Supabase is not configured.");
+      return;
+    }
+
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
       email,

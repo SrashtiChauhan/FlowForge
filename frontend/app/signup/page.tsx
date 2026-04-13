@@ -5,78 +5,256 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { isSupabaseConfigured, supabase } from "@/app/lib/supabase";
 
+function generatePassword(length = 14): string {
+  const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const lower = "abcdefghijklmnopqrstuvwxyz";
+  const digits = "0123456789";
+  const symbols = "!@#$%^&*()-_=+[]{}";
+  const all = upper + lower + digits + symbols;
+  const array = new Uint32Array(length);
+  crypto.getRandomValues(array);
+  // Ensure at least one of each required type
+  const required = [
+    upper[array[0] % upper.length],
+    lower[array[1] % lower.length],
+    digits[array[2] % digits.length],
+    symbols[array[3] % symbols.length],
+  ];
+  const rest = Array.from(array.slice(4), (n) => all[n % all.length]);
+  const combined = [...required, ...rest];
+  // Shuffle
+  for (let i = combined.length - 1; i > 0; i--) {
+    const j = array[i % array.length] % (i + 1);
+    [combined[i], combined[j]] = [combined[j], combined[i]];
+  }
+  return combined.join("");
+}
+
 export default function Signup() {
   const router = useRouter();
+  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [nextPath, setNextPath] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setNextPath(params.get("next"));
   }, []);
 
+  const handleGeneratePassword = () => {
+    const pwd = generatePassword(14);
+    setPassword(pwd);
+    setConfirmPassword(pwd);
+    setShowPassword(true);
+    setShowConfirm(true);
+  };
+
+  const handleCopy = async () => {
+    if (!password) return;
+    await navigator.clipboard.writeText(password);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const handleSignup = async () => {
+    setErrorMsg("");
+    setSuccessMsg("");
+
     if (!supabase) {
-      alert("Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in frontend/.env.local.");
+      setErrorMsg("Supabase is not configured.");
       return;
     }
 
-    if (!email || !password) {
-      alert("Please enter your email and password.");
+    if (!name.trim() || !username.trim() || !email.trim() || !password) {
+      setErrorMsg("Please fill in all required fields.");
+      return;
+    }
+
+    if (mobile && !/^\+?[0-9\s\-]{7,15}$/.test(mobile)) {
+      setErrorMsg("Please enter a valid mobile number.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMsg("Passwords do not match.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setErrorMsg("Password must be at least 8 characters.");
       return;
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
+    const res = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: email.trim(),
+        password,
+        name: name.trim(),
+        username: username.trim(),
+        mobile: mobile.trim(),
+      }),
     });
+    const result = await res.json();
+    const error = result.error ? { message: result.error } : null;
     setLoading(false);
 
-    if (error) alert(error.message);
-    else {
-      alert("Signup successful! Please check your email to confirm your account.");
-      router.push(nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : "/login");
+    if (error) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes("rate limit") || msg.includes("too many")) {
+        setErrorMsg("Too many signup attempts. Please wait a few minutes and try again, or use a different email.");
+      } else if (msg.includes("already registered") || msg.includes("user already")) {
+        setErrorMsg("This email is already registered. Try logging in instead.");
+      } else {
+        setErrorMsg(error.message);
+      }
+    } else {
+      setSuccessMsg("Account created! Please check your email to confirm your account.");
+      setTimeout(() => {
+        router.push(nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : "/login");
+      }, 2500);
     }
   };
 
-  return (
-    <div className="flex h-screen items-center justify-center bg-zinc-950 text-white">
-      <div className="bg-zinc-900 p-6 rounded-xl w-80">
-        <h1 className="text-xl mb-4">Signup</h1>
+  const inputClass =
+    "w-full p-2 mb-3 bg-zinc-800 rounded border border-zinc-700 focus:outline-none focus:border-indigo-500";
 
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-white py-8">
+      <div className="bg-zinc-900 p-6 rounded-xl w-full max-w-sm shadow-xl">
+        <h1 className="text-2xl font-semibold mb-1">Create Account</h1>
+        <p className="text-zinc-400 text-sm mb-5">Sign up for FlowForge</p>
+
+        {/* Name */}
         <input
-          className="w-full p-2 mb-3 bg-zinc-800 rounded"
-          placeholder="Email"
+          className={inputClass}
+          placeholder="Full Name *"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+
+        {/* Username */}
+        <input
+          className={inputClass}
+          placeholder="Username *"
+          value={username}
+          onChange={(e) => setUsername(e.target.value.replace(/\s/g, ""))}
+        />
+
+        {/* Email */}
+        <input
+          type="email"
+          className={inputClass}
+          placeholder="Email *"
+          value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
 
+        {/* Mobile */}
         <input
-          type="password"
-          className="w-full p-2 mb-3 bg-zinc-800 rounded"
-          placeholder="Password"
-          onChange={(e) => setPassword(e.target.value)}
+          type="tel"
+          className={inputClass}
+          placeholder="Mobile Number (optional)"
+          value={mobile}
+          onChange={(e) => setMobile(e.target.value)}
         />
 
-        <button
-          onClick={handleSignup}
-          disabled={loading || !isSupabaseConfigured}
-          className="w-full rounded bg-indigo-600 p-2 disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          {loading ? "Signing up..." : "Sign Up"}
-        </button>
+        {/* Auto-generate password button */}
+        <div className="flex items-center gap-2 mb-3">
+          <button
+            type="button"
+            onClick={handleGeneratePassword}
+            className="flex-1 rounded bg-zinc-700 hover:bg-zinc-600 p-2 text-sm transition-colors"
+          >
+            ⚡ Generate Strong Password
+          </button>
+          {password && (
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="rounded bg-zinc-700 hover:bg-zinc-600 px-3 py-2 text-sm transition-colors"
+            >
+              {copied ? "✓ Copied" : "Copy"}
+            </button>
+          )}
+        </div>
 
-        {!isSupabaseConfigured && (
-          <p className="mt-3 text-center text-xs text-amber-300">
-            Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in frontend/.env.local
+        {/* Password */}
+        <div className="relative mb-3">
+          <input
+            type={showPassword ? "text" : "password"}
+            className="w-full p-2 pr-16 bg-zinc-800 rounded border border-zinc-700 focus:outline-none focus:border-indigo-500"
+            placeholder="Password *"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-zinc-400 hover:text-white"
+          >
+            {showPassword ? "Hide" : "Show"}
+          </button>
+        </div>
+
+        {/* Confirm Password */}
+        <div className="relative mb-4">
+          <input
+            type={showConfirm ? "text" : "password"}
+            className="w-full p-2 pr-16 bg-zinc-800 rounded border border-zinc-700 focus:outline-none focus:border-indigo-500"
+            placeholder="Confirm Password *"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirm((v) => !v)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-zinc-400 hover:text-white"
+          >
+            {showConfirm ? "Hide" : "Show"}
+          </button>
+        </div>
+
+        {/* Password match indicator */}
+        {confirmPassword && (
+          <p className={`text-xs mb-3 -mt-2 ${password === confirmPassword ? "text-green-400" : "text-red-400"}`}>
+            {password === confirmPassword ? "✓ Passwords match" : "✗ Passwords do not match"}
           </p>
         )}
 
-        <p className="mt-4 text-center text-sm text-zinc-300">
+        {errorMsg && (
+          <p className="mb-3 rounded bg-red-900/50 border border-red-700 px-3 py-2 text-sm text-red-300">{errorMsg}</p>
+        )}
+        {successMsg && (
+          <p className="mb-3 rounded bg-green-900/50 border border-green-700 px-3 py-2 text-sm text-green-300">{successMsg}</p>
+        )}
+
+        <button
+          onClick={handleSignup}
+          disabled={loading}
+          className="w-full rounded bg-indigo-600 hover:bg-indigo-500 p-2 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          {loading ? "Creating account..." : "Sign Up"}
+        </button>
+
+        <p className="mt-4 text-center text-sm text-zinc-400">
           Already have an account?{" "}
-          <Link href={nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : "/login"} className="text-indigo-400 hover:text-indigo-300">
+          <Link
+            href={nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : "/login"}
+            className="text-indigo-400 hover:text-indigo-300"
+          >
             Login
           </Link>
         </p>
