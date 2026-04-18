@@ -15,20 +15,24 @@ jobs:
           script: |
             const issue = context.payload.issue;
 
+            const body = [
+              `👋 Hey @${issue.user.login}!`,
+              '',
+              'Thanks for opening this issue 🎉',
+              '',
+              '🚀 Please make sure:',
+              '- You followed the issue template',
+              '- You described the problem clearly',
+              '- You added screenshots (if needed)',
+              '',
+              "📌 If you're contributing for **NSoC'26**, mention it in the issue.",
+              '',
+              'Our team will review this soon. Stay tuned! 🔥'
+            .join('\n');
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issue.number,
-              body: `👋 Hey @${issue.user.login}!
-
-Thanks for opening this issue 🎉
-
-🚀 Please make sure:
-- You followed the issue template
-- You described the problem clearly
-- You added screenshots (if needed)
-
-📌 If you're contributing for **NSoC'26**, mention it in the issue.
-
-Our team will review this soon. Stay tuned! 🔥`
-            });
+              body
+            }));
