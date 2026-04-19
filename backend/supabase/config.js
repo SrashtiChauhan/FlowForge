@@ -1,8 +1,3 @@
-// import { createClient } from "@supabase/supabase-js";
-
-// const supabase = createClient(
-//   process.env.SUPABASE_URL,
-//   process.env.SUPABASE_SERVICE_KEY
-// );
-
-// export default supabase;
+// Supabase client is initialized in config/db.js
+// This file is intentionally left as a placeholder.
+export {};
