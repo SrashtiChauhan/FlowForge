@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { io } from "socket.io-client";
+import { useState, useEffect, useRef } from "react";
+import { io, Socket } from "socket.io-client";
 
-const socket = io("http://localhost:5000")
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
 type Message = {
   user: string;
@@ -13,38 +14,42 @@ type Message = {
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const socketRef = useRef<Socket | null>(null);
 
-  // Fetch messages 
+  // Fetch existing messages and subscribe to new ones
   useEffect(() => {
-    fetch("http://localhost:5000/api/chat")
+    fetch(`${BACKEND_URL}/api/chat`)
       .then((res) => res.json())
       .then((data) => {
-        const formatted = data.map((msg: any) => ({
+        const formatted = data.map((msg: { text: string }) => ({
           user: "User",
           text: msg.text,
         }));
         setMessages(formatted);
       })
       .catch((err) => console.error(err));
-  
-      socket.on("newMessage", (msg)=> {
-        setMessages((prev)=> [
-          ...prev,
-          {user: "User",text:msg.text},
-        ]);
-      });
-      return()=> {
-        socket.off("newMessage");
-      };
-  },[]);
+
+    const socket = io(BACKEND_URL);
+    socketRef.current = socket;
+
+    socket.on("newMessage", (msg: { text: string }) => {
+      setMessages((prev) => [...prev, { user: "User", text: msg.text }]);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   //  Send message
   async function handleSend() {
     const trimmed = input.trim();
     if (!trimmed) return;
 
+    setInput("");
+
     try {
-      const res = await fetch("http://localhost:5000/api/chat", {
+      const res = await fetch(`${BACKEND_URL}/api/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -52,15 +57,10 @@ export default function ChatPage() {
         body: JSON.stringify({ text: trimmed }),
       });
 
-      const data = await res.json();
-
-      if (!data || data.length === 0) return;
-
-      const newMsg = data[0];
-
-      
-
-      setInput("");
+      if (!res.ok) {
+        const err = await res.json();
+        console.error("Failed to send message:", err);
+      }
     } catch (err) {
       console.error(err);
     }
