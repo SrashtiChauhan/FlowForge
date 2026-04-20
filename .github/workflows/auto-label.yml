@@ -1,15 +1,21 @@
-name: Auto Label Issues
+name: Auto Label Issues and Check PRs
 
 on:
   issues:
     types: [opened, edited]
+  pull_request:
+    types: [opened, edited, synchronize]
 
 jobs:
   auto-label:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
 
     steps:
-      - name: Add label if NSoC'26 found
+      - name: Add NSoC label to issues
+        if: github.event_name == 'issues'
         uses: actions/github-script@v7
         with:
           script: |
@@ -17,11 +23,33 @@ jobs:
             const body = issue.body || "";
             const title = issue.title || "";
 
-            if (body.includes("NSoC'26") || title.includes("NSoC'26")) {
+            if (body.includes("NSoC'26") || title.includes("NSoC'26") ||
+                body.includes("nsoc26") || title.includes("nsoc26")) {
               await github.rest.issues.addLabels({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
                 labels: ["NSoC'26"]
+              });
+            }
+
+      - name: Check nsoc26 tag in PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const title = pr.title || "";
+            const body = pr.body || "";
+
+            const hasTag = title.includes("nsoc26") || body.includes("nsoc26") ||
+                           title.includes("NSoC'26") || body.includes("NSoC'26");
+
+            if (!hasTag) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: "⚠️ **NSoC 2026**: This PR is missing the `nsoc26` tag.\n\nPlease update the PR title or description to include **`nsoc26`** to be eligible for NSoC points.\n\nExample: `feat: add login page [nsoc26]`"
               });
             }
