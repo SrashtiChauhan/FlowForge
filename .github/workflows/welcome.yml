@@ -1,38 +1,29 @@
 name: Welcome New Issue
-
 on:
   issues:
     types: [opened]
-
 jobs:
   welcome:
     runs-on: ubuntu-latest
-
     steps:
       - name: Comment on new issue
         uses: actions/github-script@v7
         with:
           script: |
             const issue = context.payload.issue;
+            const message = `👋 Hey @${issue.user.login}! Thanks for opening this issue 🎉
 
-            const body = [
-              `👋 Hey @${issue.user.login}!`,
-              '',
-              'Thanks for opening this issue 🎉',
-              '',
-              '🚀 Please make sure:',
-              '- You followed the issue template',
-              '- You described the problem clearly',
-              '- You added screenshots (if needed)',
-              '',
-              "📌 If you're contributing for **NSoC'26**, mention it in the issue.",
-              '',
-              'Our team will review this soon. Stay tuned! 🔥'
-            .join('\n');
+            🚀 Please make sure:
+            - You followed the issue template
+            - You described the problem clearly
+            - You added screenshots (if needed)
+
+            📌 If you're contributing for **NSoC' 26**, mention it in the issue. 
+            Our team will review this soon. Stay tuned! 🔥`;
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issue.number,
-              body
-            }));
+              body: message
+            });
