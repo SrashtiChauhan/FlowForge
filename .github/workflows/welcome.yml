@@ -19,11 +19,11 @@ jobs:
               "👋 Hey @" + issue.user.login + "!\n\n" +
               "Thanks for opening this issue! 🚀\n\n" +
 
-              "## 📌 Apertre'26 Contribution Guidelines\n\n" +
+              "## 📌 NSoC'26 Contribution Guidelines\n\n" +
 
               "⚠️ Please follow these rules carefully:\n" +
               "- Do NOT create a PR until this issue is assigned to you\n" +
-              "- Include `apertre3.0` tag\n" +
+              "- Include `NSoC'26` tag\n" +
               "- Provide ONE difficulty tag: `easy` / `medium` / `hard`\n" +
               "- Include screenshots if it's UI-related\n" +
               "- Follow all contribution guidelines properly\n\n" +
