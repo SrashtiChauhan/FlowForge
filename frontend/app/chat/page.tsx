@@ -25,7 +25,7 @@ export default function ChatPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const isAtBottomRef = useRef(true);
 
-  // 🔌 SOCKET SETUP
+  //  SOCKET SETUP
   useEffect(() => {
     const socket = io("http://localhost:5000");
     socketRef.current = socket;
@@ -88,21 +88,21 @@ export default function ChatPage() {
     return () => socket.disconnect();
   }, []);
 
-  // 👤 JOIN USER
+  //  JOIN USER
   useEffect(() => {
     if (socketRef.current && username.trim()) {
       socketRef.current.emit("join", username);
     }
   }, [username]);
 
-  // 📜 SMART AUTO SCROLL (FIXED)
+  //  SMART AUTO SCROLL (FIXED)
   useEffect(() => {
     if (isAtBottomRef.current) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
 
-  // 👀 MARK ONLY LAST MESSAGE AS SEEN (FIXED)
+  // MARK ONLY LAST MESSAGE AS SEEN (FIXED)
   useEffect(() => {
     if (!socketRef.current) return;
 
@@ -112,7 +112,7 @@ export default function ChatPage() {
     }
   }, [messages]);
 
-  // ✉️ SEND
+  // SEND
   async function handleSend() {
     if (!input.trim() || !username.trim()) return;
 
@@ -127,7 +127,7 @@ export default function ChatPage() {
     setInput("");
   }
 
-  // ⌨️ TYPING
+  // TYPING
   function handleTyping(e: any) {
     setInput(e.target.value);
 

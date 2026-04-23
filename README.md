@@ -155,17 +155,6 @@ If your existing Vercel project was imported from the repository root and shows 
 
 ---
 
-## 🤝 Contributing
-
-Contributions are welcome and appreciated!
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Open a Pull Request
-
----
-
 ## 📌 Future Enhancements
 
 * 🤖 AI-powered task suggestions
@@ -173,6 +162,29 @@ Contributions are welcome and appreciated!
 * 🔔 Notification system
 * 🔌 Plugin architecture
 * 📱 Mobile app support
+
+---
+
+## 🌸 Nexus Spring of Code
+
+This project is officially participating in **Nexus Spring of Code (NSoC) 2026)**.
+
+Contributors are welcome to join and earn points by solving issues tagged with difficulty levels.
+
+### Issue Labels & Points
+
+| Label  | Points |
+|--------|--------|
+| level1 | 3 pts  |
+| level2 | 5 pts  |
+| level3 | 10 pts |
+
+### How to Contribute via NSoC
+
+1. Browse issues labeled `level1`, `level2`, or `level3`
+2. **Request assignment** on an issue before starting work — PRs without assignment will not be accepted
+3. Include **`nsoc26`** in your Pull Request title or description
+4. Follow the contribution guidelines in [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ---
 

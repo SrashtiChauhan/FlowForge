@@ -1,0 +1,52 @@
+name: Welcome New Issue
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Comment on new issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+
+            const message =
+              "👋 Hey @" + issue.user.login + "!\n\n" +
+              "Thanks for opening this issue! 🚀\n\n" +
+
+              "## 📌 Apertre'26 Contribution Guidelines\n\n" +
+
+              "⚠️ Please follow these rules carefully:\n" +
+              "- Do NOT create a PR until this issue is assigned to you\n" +
+              "- Include `apertre3.0` tag\n" +
+              "- Provide ONE difficulty tag: `easy` / `medium` / `hard`\n" +
+              "- Include screenshots if it's UI-related\n" +
+              "- Follow all contribution guidelines properly\n\n" +
+
+              "🧑‍💻 A mentor will review and assign this issue soon.\n\n" +
+
+              "----------------------------------------\n\n" +
+
+              "🙏 Thank you for raising this issue!\n" +
+              "We’ll review it as soon as possible. We truly appreciate your contribution ✨\n\n" +
+
+              "📖 Meanwhile, please make sure you have checked:\n" +
+              "- README.md\n" +
+              "- CONTRIBUTING.md\n" +
+              "- CODE_OF_CONDUCT.md\n\n" +
+
+              "🚫 Reminder: Do NOT create a PR until this issue has been assigned.\n\n" +
+
+              "Happy coding! 💻🔥";
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: message
+            });
