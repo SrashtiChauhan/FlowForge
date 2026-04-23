@@ -24,7 +24,6 @@ jobs:
               "⚠️ Please follow these rules carefully:\n" +
               "- Do NOT create a PR until this issue is assigned to you\n" +
               "- Include `NSoC'26` tag\n" +
-              "- Provide ONE difficulty tag: `easy` / `medium` / `hard`\n" +
               "- Include screenshots if it's UI-related\n" +
               "- Follow all contribution guidelines properly\n\n" +
 
