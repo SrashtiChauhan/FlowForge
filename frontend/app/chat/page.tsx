@@ -3,103 +3,220 @@
 import { useState, useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
-
 type Message = {
+  id?: string;
   user: string;
   text: string;
+  time?: string;
+  status?: string;
 };
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [username, setUsername] = useState("");
+  const [typingUser, setTypingUser] = useState("");
+  const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+
   const socketRef = useRef<Socket | null>(null);
+  const typingTimeoutRef = useRef<any>(null);
 
-  // Fetch existing messages and subscribe to new ones
+  const containerRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const isAtBottomRef = useRef(true);
+
+  //  SOCKET SETUP
   useEffect(() => {
-    fetch(`${BACKEND_URL}/api/chat`)
-      .then((res) => res.json())
-      .then((data) => {
-        const formatted = data.map((msg: { text: string }) => ({
-          user: "User",
-          text: msg.text,
-        }));
-        setMessages(formatted);
-      })
-      .catch((err) => console.error(err));
-
-    const socket = io(BACKEND_URL);
+    const socket = io("http://localhost:5000");
     socketRef.current = socket;
 
-    socket.on("newMessage", (msg: { text: string }) => {
-      setMessages((prev) => [...prev, { user: "User", text: msg.text }]);
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
-
-  //  Send message
-  async function handleSend() {
-    const trimmed = input.trim();
-    if (!trimmed) return;
-
-    setInput("");
-
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ text: trimmed }),
+    // FETCH MESSAGES
+    fetch("http://localhost:5000/api/chat")
+      .then((res) => res.json())
+      .then((data) => {
+        const formatted = data.map((msg: any) => ({
+          id: msg.id,
+          user: msg.username,
+          text: msg.text,
+          time: new Date(msg.created_at).toLocaleTimeString(),
+          status: msg.status || "sent",
+        }));
+        setMessages(formatted);
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        console.error("Failed to send message:", err);
+    // NEW MESSAGE
+    socket.on("newMessage", (msg) => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: msg.id,
+          user: msg.username,
+          text: msg.text,
+          time: new Date(msg.created_at).toLocaleTimeString(),
+          status: msg.status,
+        },
+      ]);
+    });
+
+    // TYPING
+    socket.on("typing", (user) => {
+      setTypingUser(user);
+
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
       }
-    } catch (err) {
-      console.error(err);
+
+      typingTimeoutRef.current = setTimeout(() => {
+        setTypingUser("");
+      }, 1500);
+    });
+
+    // ONLINE USERS
+    socket.on("onlineUsers", (users) => {
+      setOnlineUsers(users);
+    });
+
+    // SEEN
+    socket.on("messageSeen", (messageId) => {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === messageId ? { ...msg, status: "seen" } : msg
+        )
+      );
+    });
+
+    return () => socket.disconnect();
+  }, []);
+
+  //  JOIN USER
+  useEffect(() => {
+    if (socketRef.current && username.trim()) {
+      socketRef.current.emit("join", username);
+    }
+  }, [username]);
+
+  //  SMART AUTO SCROLL (FIXED)
+  useEffect(() => {
+    if (isAtBottomRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
+  // MARK ONLY LAST MESSAGE AS SEEN (FIXED)
+  useEffect(() => {
+    if (!socketRef.current) return;
+
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg?.id) {
+      socketRef.current.emit("seen", lastMsg.id);
+    }
+  }, [messages]);
+
+  // SEND
+  async function handleSend() {
+    if (!input.trim() || !username.trim()) return;
+
+    await fetch("http://localhost:5000/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text: input, username }),
+    });
+
+    setInput("");
+  }
+
+  // TYPING
+  function handleTyping(e: any) {
+    setInput(e.target.value);
+
+    if (socketRef.current && username.trim()) {
+      socketRef.current.emit("typing", username);
     }
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") handleSend();
-  }
-
   return (
-    <div className="mx-auto flex h-[80vh] w-full max-w-5xl flex-col p-4 md:p-10">
-      <h1 className="mb-4 text-3xl font-bold tracking-tight text-slate-900">
-        Team Chat
-      </h1>
+    <div className="p-4 max-w-4xl mx-auto">
+      <h1 className="text-2xl font-bold mb-3">Team Chat</h1>
 
-      <div className="panel flex-1 space-y-3 overflow-y-auto p-4">
-        {messages.map((msg, i) => (
-          <div
-            key={i}
-            className="rounded-lg border border-(--line) bg-(--bg-soft) p-3"
-          >
-            <p className="font-semibold text-slate-900">{msg.user}</p>
-            <p className="text-sm text-slate-700">{msg.text}</p>
-          </div>
-        ))}
+      {/* USERNAME */}
+      <input
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        placeholder="Enter name"
+        className="mb-3 p-2 border rounded w-full"
+      />
+
+      {/* ONLINE USERS */}
+      <div className="mb-2 text-sm text-green-600">
+        Online: {onlineUsers.join(", ")}
       </div>
 
-      <div className="mt-4 flex gap-2">
+      {/* MESSAGES */}
+      <div
+        ref={containerRef}
+        onScroll={() => {
+          const el = containerRef.current;
+          if (!el) return;
+
+          const threshold = 100;
+          isAtBottomRef.current =
+            el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+        }}
+        className="h-[400px] overflow-y-auto space-y-2 border p-3"
+      >
+        {messages.map((msg, i) => {
+          const isMe = msg.user === username;
+
+          return (
+            <div
+              key={i}
+              className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+            >
+              <div
+                className={`p-3 rounded-xl max-w-xs shadow ${
+                  isMe
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-200 text-black"
+                }`}
+              >
+                {/* Show name only for others */}
+                {!isMe && (
+                  <p className="font-semibold text-sm">{msg.user}</p>
+                )}
+
+                <p>{msg.text}</p>
+
+                <p className="text-xs text-right opacity-70">
+                  {msg.time} {msg.status === "seen" ? "✓✓" : "✓"}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+
+        <div ref={bottomRef}></div>
+      </div>
+
+      {/* TYPING */}
+      {typingUser && typingUser !== username && (
+        <p className="text-sm italic mt-1">
+          {typingUser} is typing...
+        </p>
+      )}
+
+      {/* INPUT */}
+      <div className="flex mt-3 gap-2">
         <input
-          type="text"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Type a message..."
-          className="flex-1 rounded-lg border border-(--line) bg-white p-3 text-slate-900 outline-none ring-teal-600/20 placeholder:text-slate-400 focus:ring"
+          onChange={handleTyping}
+          placeholder="Type message"
+          className="flex-1 border p-2 rounded"
         />
         <button
           onClick={handleSend}
-          className="accent-btn rounded-lg px-5 font-semibold transition"
+          className="bg-green-600 text-white px-4 rounded"
         >
           Send
         </button>
