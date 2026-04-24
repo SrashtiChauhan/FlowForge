@@ -9,10 +9,13 @@ export async function POST(req: NextRequest) {
   if (!email || !password || !name || !username) {
     return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
   }
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+    return NextResponse.json({ error: "Server configuration error." }, { status: 500 });
+  }
 
   const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY,
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 
@@ -34,7 +37,7 @@ export async function POST(req: NextRequest) {
 
   // Insert profile row
   if (data.user) {
-    await supabaseAdmin.from("profiles").insert([
+    const { error: profileError } = await supabaseAdmin.from("profiles").insert([
       {
         id: data.user.id,
         email,
@@ -43,6 +46,10 @@ export async function POST(req: NextRequest) {
         mobile,
       },
     ]);
+
+    if (profileError) {
+      return NextResponse.json({ error: "Failed to create profile: " + profileError.message }, { status: 400 });
+    }
   }
 
   return NextResponse.json({ success: true });
