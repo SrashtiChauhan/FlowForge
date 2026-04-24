@@ -85,7 +85,9 @@ export default function ChatPage() {
       );
     });
 
-    return () => socket.disconnect();
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   //  JOIN USER
