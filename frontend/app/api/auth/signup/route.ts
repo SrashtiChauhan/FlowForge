@@ -1,11 +1,15 @@
+
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
+
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, name, username, mobile } = await req.json();
+    const payload = await req.json();
+    const { email, password, name, username, mobile, description, members, due, tags } = payload || {};
 
     // Input validation
     if (!email || !password || !name || !username) {
@@ -14,7 +18,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
+    
     // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -39,7 +43,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
+    
     // Environment variables check
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
       console.error("Missing Supabase environment variables");
@@ -48,7 +52,7 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
-
+    
     // Initialize Supabase admin client
     const supabaseAdmin = createClient(
       process.env.SUPABASE_URL,
@@ -60,13 +64,13 @@ export async function POST(req: NextRequest) {
         } 
       }
     );
-
+    
     // 1. Check for duplicate username
     const { data: existingProfile } = await supabaseAdmin
-      .from("profiles")
-      .select("id")
-      .eq("username", username.toLowerCase().trim())
-      .maybeSingle();
+    .from("profiles")
+    .select("id")
+    .eq("username", username.toLowerCase().trim())
+    .maybeSingle();
 
     if (existingProfile) {
       return NextResponse.json(
@@ -101,7 +105,7 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-
+      
       console.error("User creation error:", userError);
       return NextResponse.json(
         { error: userError?.message || "Failed to create user." }, 
@@ -110,7 +114,7 @@ export async function POST(req: NextRequest) {
     }
 
     const user = userData.user;
-
+    
     // 4. Create profile row
     const { error: profileError } = await supabaseAdmin
       .from("profiles")
@@ -136,14 +140,48 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
-    // Success response (no sensitive data)
-    return NextResponse.json({ 
-      success: true, 
+    const { data: project, error: projectError } = await supabaseAdmin
+      .from('projects')
+      .insert([{
+        id: randomUUID(),
+        name,
+        description: description || null,
+        owner_id: user.id,
+        members: typeof members === 'number' ? members : (members ? Number(members) : 1),
+        due: due ? new Date(due).toISOString().slice(0,10) : null,
+        tags: Array.isArray(tags) ? tags : (tags ? [tags] : []),
+        created_at: new Date().toISOString(),
+      }])
+      .select('*')
+      .single();
+      
+      if (projectError) {
+      console.error("Project creation error:", projectError);
+      // Cleanup: Delete user and profile if project creation fails
+      try {
+        await supabaseAdmin.auth.admin.deleteUser(user.id);
+      } catch (cleanupError) {
+        console.error("Cleanup error:", cleanupError);
+      }
+      return NextResponse.json({ error: projectError.message || 'Failed to create project.' }, { status: 500 });
+    }
+    const apiProjects = {
+      id: project.id,
+      name: project.name,
+      desc: project.desc ?? project.description ?? "",
+      members: project.members ?? 0,
+      tags: project.tags ?? [],
+      due: project.due ?? null,
+      createdAt: project.created_at ?? new Date().toISOString(),
+    };
+    // Single combined success response (no sensitive data)
+    return NextResponse.json({
+      success: true,
       userId: user.id,
-      email: user.email 
+      email: user.email,
+      project: apiProjects
     }, { status: 201 });
-
+    
   } catch (error) {
     console.error("Registration error:", error);
     return NextResponse.json(
@@ -151,4 +189,36 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+export const GET =  async (request: Request) => {
+  const supabaseURL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  const supabase = createClient(supabaseURL, supabaseAnonKey, {
+    auth: {autoRefreshToken: false, persistSession: false},
+  });
+
+  const authHeader = request.headers.get("authorization");
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  if(!token) return NextResponse.json({error: "Unauthorized"}, {status: 401});
+  
+  const {data: userData, error: userError} = await supabase.auth.getUser(token);
+  if(userError || !userData?.user) return NextResponse.json({error: "Details not Found"}, {status: 401});
+
+  const {data: projects, error} = await supabase
+     .from('projects')
+     .select("*")
+     .eq("owner_id",userData.user.id)
+     .order('created_at', {ascending: false});
+  if(error) return NextResponse.json({error: error.message}, {status: 500});
+  const apiProjects = (projects || []).map((row: any) => ({
+    id: row.id,
+    name: row.name,
+    desc: row.description ?? row.desc ?? "",
+    members: row.members ?? 0,
+    tags: row.tags ?? [],
+    due: row.due ?? null,
+    createdAt: row.created_at ?? row.createdAt ?? new Date().toISOString(),
+  }));
+  return NextResponse.json({ projects: apiProjects });
+  
 }

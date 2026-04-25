@@ -85,7 +85,7 @@ export default function ProjectDialog({
           name: Pname.trim(),
           desc: Pdesc.trim(),
           members: PteamSize,
-          due: Pdeadline ? new Date(Pdeadline).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : null,
+            due: Pdeadline ? new Date(Pdeadline).toISOString().slice(0,10) : null,
         }),
       });
 
@@ -120,7 +120,7 @@ export default function ProjectDialog({
           if (!loading) close();
         }}
       />
-      <div className="relative z-10 w-full max-w-md rounded bg-white p-6 shadow-lg">
+      <div className="relative z-10 w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
         <h3 className="text-lg font-semibold mb-4">Add Project</h3>
 
         <label className="block mb-2 text-sm text-black">Project Name *</label>
@@ -174,7 +174,7 @@ export default function ProjectDialog({
           <button
             onClick={close}
             disabled={loading}
-            className="rounded bg-slate-100 px-3 py-2 text-sm hover:bg-slate-700 disabled:opacity-60 disabled:cursor-not-allowed text-bold"
+            className="rounded bg-slate-100 px-3 py-2 text-sm hover:bg-slate-200  disabled:opacity-60 disabled:cursor-not-allowed text-bold"
             type="button"
           >
             Cancel

@@ -22,6 +22,27 @@ export default function ProjectsPage() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  useEffect(() => {
+    async function load(){
+      try {
+        if(!supabase) return;
+        const sessionRes = await supabase.auth.getSession();
+        const token = sessionRes?.data?.session?.access_token ?? null;
+        if(!token) throw new Error("Token not found!.");
+        const res = await fetch('/api/projects',{
+          headers: token ? {Authorization: `Bearer ${token}`} : undefined,
+        });
+        if (!res.ok) throw new Error ('Failed to load the Projects');
+        const body = await res.json();
+        setProjects(body.projects || []);
+      } catch (error) {
+        console.error("Error in loading projects ", error);
+        
+      }
+    }
+    load();
+  }, [])
+
   const filteredProjects = projects.filter((project) => {
     const query = debouncedSearchTerm.toLowerCase();
     const projectName = (project.name || "").toLowerCase();
