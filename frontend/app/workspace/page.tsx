@@ -1,5 +1,7 @@
 "use client";
 
+import { KanbanBoard } from "../components/kanban/KanbanBoard";
+
 const users = [
   { name: "Shrinivas", status: "Working on UI" },
   { name: "Rahul", status: "Fixing API bug" },
@@ -29,10 +31,10 @@ export default function WorkspacePage() {
       </div>
 
       <div className="panel p-6 md:col-span-2">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">Workspace</h2>
+        <h2 className="mb-4 text-lg font-semibold text-slate-900">Workspace Tasks</h2>
 
-        <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-(--line) bg-(--bg-soft) text-slate-600">
-          Live workspace preview coming soon
+        <div className="h-[600px]">
+          <KanbanBoard />
         </div>
       </div>
 

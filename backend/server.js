@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import http from "http";
 import { Server } from "socket.io";
 import chatRoutes from "./routes/chat.routes.js";
+import taskRoutes from "./routes/tasks.routes.js";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/chat", chatRoutes);
+app.use("/api/tasks", taskRoutes);
 
 io.on("connection", (socket) => {
   console.log("⚡ User connected:", socket.id);

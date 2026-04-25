@@ -90,7 +90,9 @@ socket.on("newMessage", (msg) => {
       );
     });
 
-    return () => socket.disconnect();
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   //  JOIN USER
