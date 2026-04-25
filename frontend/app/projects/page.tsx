@@ -23,26 +23,29 @@ export default function ProjectsPage() {
   }, [searchTerm]);
 
   useEffect(() => {
-    async function load(){
+  // This listener waits for Supabase to actually load the session from storage
+    if(!supabase) return;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    if (session?.access_token) {
       try {
-        if(!supabase) return;
-        const sessionRes = await supabase.auth.getSession();
-        const token = sessionRes?.data?.session?.access_token ?? null;
-        if(!token) throw new Error("Token not found!.");
-        const res = await fetch('/api/projects',{
-          headers: token ? {Authorization: `Bearer ${token}`} : undefined,
+        const res = await fetch('/api/projects', {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
         });
-        if (!res.ok) throw new Error ('Failed to load the Projects');
+        if (!res.ok) throw new Error('Failed to load the Projects');
         const body = await res.json();
         setProjects(body.projects || []);
       } catch (error) {
         console.error("Error in loading projects ", error);
-        
       }
+    } else if (event === 'INITIAL_SESSION' && !session) {
+       // Optional: handle the case where the user is definitely not logged in
+       console.warn("No session found after initialization");
     }
-    load();
-  }, [])
-
+  });
+  return () => subscription.unsubscribe();
+  }, []);
   const filteredProjects = projects.filter((project) => {
     const query = debouncedSearchTerm.toLowerCase();
     const projectName = (project.name || "").toLowerCase();

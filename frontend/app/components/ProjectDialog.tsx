@@ -67,9 +67,11 @@ export default function ProjectDialog({
         return;
       }
 
-      const sessionRes = await supabase.auth.getSession();
-      const token = sessionRes?.data?.session?.access_token ?? null;
-      if (!token) {
+      // 1. Get the session properly
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token || sessionError) {
         setError("Unauthorized, please sign in to create a project.");
         setLoading(false);
         return;
@@ -79,23 +81,26 @@ export default function ProjectDialog({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          // FIX: Use the 'token' variable defined above
+          "Authorization": `Bearer ${token}`, 
         },
         body: JSON.stringify({
           name: Pname.trim(),
           desc: Pdesc.trim(),
           members: PteamSize,
-            due: Pdeadline ? new Date(Pdeadline).toISOString().slice(0,10) : null,
+          due: Pdeadline ? new Date(Pdeadline).toISOString() : null,
         }),
       });
 
       const payload = await res.json();
+      
       if (!res.ok) {
         setError(payload.error || "Failed to create project.");
         setLoading(false);
         return;
       }
 
+      // Successfully created!
       onCreated?.(payload.project);
       close();
     } catch (err) {
@@ -105,7 +110,6 @@ export default function ProjectDialog({
       setLoading(false);
     }
   };
-
   if (!isOpen) return null;
 
   return (
