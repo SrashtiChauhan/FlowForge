@@ -1,6 +1,5 @@
 import supabase from "../config/db.js";
 
-// GET messages
 export const getMessages = async (req, res) => {
   const { data, error } = await supabase
     .from("messages")
@@ -12,25 +11,36 @@ export const getMessages = async (req, res) => {
   res.json(data);
 };
 
-// SEND message
 export const sendMessage = async (req, res) => {
-  const { text } = req.body;
+  try {
+    const { text, username } = req.body;
 
-  const { data, error } = await supabase
-    .from("messages")
-    .insert([{ text }])
-    .select();
+    console.log("Incoming:", text, username);
 
-  if (error) return res.status(500).json({ error: error.message });
+    if (!text || !username) {
+      return res.status(400).json({ error: "Text & username required" });
+    }
 
-  if (!data || data.length === 0) {
-    return res.status(500).json({ error: "Message not saved" });
+    const { data, error } = await supabase
+      .from("messages")
+      .insert([{ text, username, status: "sent" }])
+      .select();
+
+    if (error) {
+      console.error("Supabase error:", error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    const io = req.app.get("io");
+
+    io.emit("newMessage", {
+      ...data[0],
+      status: "delivered",
+    });
+
+    res.json(data);
+  } catch (err) {
+    console.error("Server crash:", err);
+    res.status(500).json({ error: "Server error" });
   }
-
-  const io = req.app.get("io");
-  if (io) {
-    io.emit("newMessage", data[0]);
-  }
-
-  res.json(data);
 };

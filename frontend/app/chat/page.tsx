@@ -24,6 +24,7 @@ export default function ChatPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const isAtBottomRef = useRef(true);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   //  SOCKET SETUP
   useEffect(() => {
@@ -44,20 +45,24 @@ export default function ChatPage() {
         setMessages(formatted);
       });
 
-    // NEW MESSAGE
-    socket.on("newMessage", (msg) => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: msg.id,
-          user: msg.username,
-          text: msg.text,
-          time: new Date(msg.created_at).toLocaleTimeString(),
-          status: msg.status,
-        },
-      ]);
-    });
+// NEW MESSAGE
+socket.on("newMessage", (msg) => {
+  setMessages((prev) => [
+    ...prev,
+    {
+      id: msg.id,
+      user: msg.username,
+      text: msg.text,
+      time: new Date(msg.created_at).toLocaleTimeString(),
+      status: msg.status,
+    },
+  ]);
 
+  //  new logic
+  if (!isAtBottomRef.current) {
+    setUnreadCount((prev) => prev + 1);
+  }
+});
     // TYPING
     socket.on("typing", (user) => {
       setTypingUser(user);
@@ -139,7 +144,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="p-4 max-w-4xl mx-auto">
+    <div className="p-4 max-w-4xl mx-auto relative">
       <h1 className="text-2xl font-bold mb-3">Team Chat</h1>
 
       {/* USERNAME */}
@@ -157,17 +162,25 @@ export default function ChatPage() {
 
       {/* MESSAGES */}
       <div
-        ref={containerRef}
-        onScroll={() => {
-          const el = containerRef.current;
-          if (!el) return;
+  ref={containerRef}
+  onScroll={() => {
+    const el = containerRef.current;
+    if (!el) return;
 
-          const threshold = 100;
-          isAtBottomRef.current =
-            el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
-        }}
-        className="h-[400px] overflow-y-auto space-y-2 border p-3"
-      >
+    const threshold = 100;
+
+    const atBottom =
+      el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+
+    isAtBottomRef.current = atBottom;
+
+    //  reset unread when user reaches bottom
+    if (atBottom) {
+      setUnreadCount(0);
+    }
+  }}
+  className="h-[400px] overflow-y-auto space-y-2 border p-3"
+>
         {messages.map((msg, i) => {
           const isMe = msg.user === username;
 
@@ -200,6 +213,19 @@ export default function ChatPage() {
 
         <div ref={bottomRef}></div>
       </div>
+      {unreadCount > 0 && (
+  <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10">
+    <button
+      onClick={() => {
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+        setUnreadCount(0);
+      }}
+      className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm shadow hover:bg-blue-600 transition"
+    >
+      {unreadCount} New Message{unreadCount > 1 ? "s" : ""}
+    </button>
+  </div>
+)}
 
       {/* TYPING */}
       {typingUser && typingUser !== username && (
