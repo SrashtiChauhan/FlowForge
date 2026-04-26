@@ -11,39 +11,46 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-
-//socket.io setup
 const io = new Server(server, {
-  cors: {
-    origin: "*",
-  },
+  cors: { origin: "*" },
 });
 
 app.set("io", io);
 
-//middleware
+const onlineUsers = new Map(); // socket.id -> username
+
 app.use(cors());
 app.use(express.json());
 
-//test route
 app.get("/", (req, res) => {
   res.send("FlowForge Backend Running 🚀");
 });
 
-//routes
 app.use("/api/chat", chatRoutes);
 app.use("/api/tasks", taskRoutes);
 
-//socket connection
 io.on("connection", (socket) => {
   console.log("⚡ User connected:", socket.id);
 
-  socket.on("task-moved", (data) => {
-    // Broadcast the task-moved event to all other clients
-    socket.broadcast.emit("task-moved", data);
+  // JOIN
+  socket.on("join", (username) => {
+    onlineUsers.set(socket.id, username);
+    io.emit("onlineUsers", Array.from(onlineUsers.values()));
+  });
+
+  // TYPING
+  socket.on("typing", (username) => {
+    socket.broadcast.emit("typing", username);
+  });
+
+  // SEEN
+  socket.on("seen", (messageId) => {
+    io.emit("messageSeen", messageId);
   });
 
   socket.on("disconnect", () => {
+    onlineUsers.delete(socket.id);
+    io.emit("onlineUsers", Array.from(onlineUsers.values()));
     console.log("User disconnected:", socket.id);
   });
 });
