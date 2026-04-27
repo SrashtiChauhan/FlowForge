@@ -107,9 +107,19 @@ export default function Signup() {
         mobile: mobile.trim(),
       }),
     });
-    const result = await res.json();
-    const error = result.error ? { message: result.error } : null;
-    setLoading(false);
+    let  result: any = {};
+    let error: any = null;
+    try {
+      result = await res.json();
+      if (result.error){
+        error = {message: result.error}
+      }
+    } catch (e) {
+      error = {message: "Failed to parse server response."}
+      setErrorMsg("An unexpected error occurred. Please try again.");
+      setLoading(false);
+      return;
+    }
 
     if (error) {
       const msg = error.message.toLowerCase();
