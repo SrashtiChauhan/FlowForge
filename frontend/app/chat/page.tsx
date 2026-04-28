@@ -182,23 +182,35 @@ socket.on("newMessage", (msg) => {
   className="h-[400px] overflow-y-auto space-y-2 border p-3"
 >
         {messages.map((msg, i) => {
+           const prevMsg = messages[i - 1];
+          const isSameUser = prevMsg && prevMsg.user === msg.user;
           const isMe = msg.user === username;
 
           return (
             <div
-              key={i}
-              className={`flex ${isMe ? "justify-end" : "justify-start"}`}
-            >
+  key={i}
+  className={`flex ${isMe ? "justify-end" : "justify-start"} ${
+    isSameUser ? "mt-0.5" : "mt-3"
+  }`}
+>
               <div
-                className={`p-3 rounded-xl max-w-xs shadow ${
-                  isMe
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-200 text-black"
-                }`}
+                className={`p-3 max-w-xs shadow ${
+  isMe
+    ? `bg-green-500 text-white ${
+        isSameUser
+          ? "rounded-lg rounded-tr-2xl"
+          : "rounded-2xl rounded-br-md"
+      }`
+    : `bg-gray-200 text-black ${
+        isSameUser
+          ? "rounded-lg rounded-tl-2xl"
+          : "rounded-2xl rounded-bl-md"
+      }`
+}`}
               >
                 {/* Show name only for others */}
-                {!isMe && (
-                  <p className="font-semibold text-sm">{msg.user}</p>
+                {!isMe && !isSameUser && (
+                      <p className="font-semibold text-sm">{msg.user}</p>
                 )}
 
                 <p>{msg.text}</p>
