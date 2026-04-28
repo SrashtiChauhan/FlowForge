@@ -9,62 +9,58 @@ export default function HomePage() {
   return (
     <div className="min-h-screen" style={{ background: "var(--bg-page)" }}>
       {/* NAV */}
-      <header
-        className="sticky top-0 z-50"
-        style={{
-          borderBottom: "1px solid var(--line)",
-          background: "var(--bg-panel)",
-        }}
-      >
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4">
-          <Link href="/" className="flex items-center gap-2.5">
+      <header className="sticky top-0 z-50 flex justify-center px-5 pt-5">
+        <div
+          className="flex w-full max-w-3xl items-center justify-between px-5 py-3"
+          style={{
+            background: "var(--bg-panel)",
+            border: "1px solid var(--line)",
+            borderRadius: "999px",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
+          }}
+        >
+          <Link href="/" className="flex items-center gap-2">
             <div
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold text-white"
+              className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white"
               style={{ background: "var(--accent)" }}
             >
               FF
             </div>
             <span
-              className="font-semibold tracking-tight"
+              className="text-sm font-semibold tracking-tight"
               style={{ color: "var(--text-main)" }}
             >
               FlowForge
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-7 text-sm md:flex">
+          <nav className="hidden items-center gap-6 text-sm md:flex">
             <Link
               href="/projects"
-              className="transition-opacity opacity-70 hover:opacity-100"
+              className="opacity-60 transition-opacity hover:opacity-100"
               style={{ color: "var(--text-main)" }}
             >
               Projects
             </Link>
             <Link
               href="/dashboard"
-              className="transition-opacity opacity-70 hover:opacity-100"
+              className="opacity-60 transition-opacity hover:opacity-100"
               style={{ color: "var(--text-main)" }}
             >
               Dashboard
             </Link>
-            <Link
-              href="/login"
-              className="transition-opacity opacity-70 hover:opacity-100"
-              style={{ color: "var(--text-main)" }}
-            >
-              Login
-            </Link>
-            <Link
-              href="/signup"
-              className="accent-btn rounded-lg px-4 py-2 text-sm font-medium"
-            >
-              Sign up
-            </Link>
           </nav>
+
+          <Link
+            href="/signup"
+            className="accent-btn hidden rounded-full px-4 py-1.5 text-sm font-medium md:block"
+          >
+            Get started
+          </Link>
 
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="rounded p-2 md:hidden"
+            className="rounded-full p-1.5 md:hidden"
             style={{ color: "var(--text-muted)" }}
           >
             {menuOpen ? "✕" : "☰"}
@@ -73,10 +69,11 @@ export default function HomePage() {
 
         {menuOpen && (
           <div
-            className="space-y-1 px-5 pb-4 md:hidden"
+            className="absolute left-5 right-5 top-20 space-y-1 rounded-2xl px-5 py-4 md:hidden"
             style={{
-              borderTop: "1px solid var(--line)",
               background: "var(--bg-panel)",
+              border: "1px solid var(--line)",
+              boxShadow: "0 8px 30px rgba(0,0,0,0.08)",
             }}
           >
             <Link
@@ -94,17 +91,10 @@ export default function HomePage() {
               Dashboard
             </Link>
             <Link
-              href="/login"
-              className="block py-2 text-sm"
-              style={{ color: "var(--text-muted)" }}
-            >
-              Login
-            </Link>
-            <Link
               href="/signup"
-              className="accent-btn mt-2 block rounded-lg px-4 py-2 text-center text-sm font-medium"
+              className="accent-btn mt-2 block rounded-full px-4 py-2 text-center text-sm font-medium"
             >
-              Sign up
+              Get started
             </Link>
           </div>
         )}
