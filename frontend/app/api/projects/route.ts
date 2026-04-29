@@ -37,7 +37,20 @@ export const GET = async (request: Request) => {
     return NextResponse.json({ error: "Invalid session" }, { status: 401 });
   }
 
-  const { data: projects, error } = await supabase
+  // Use the user JWT for RLS-protected reads.
+  const supabaseAuthed = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    }
+  );
+
+  const { data: projects, error } = await supabaseAuthed
      .from('projects')
      .select("*")
      .eq("owner_id", userData.user.id)

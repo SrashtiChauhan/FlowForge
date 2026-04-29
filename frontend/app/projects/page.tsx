@@ -12,6 +12,7 @@ export default function ProjectsPage() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [open, setOpen] = useState(false);
   const [projects, setProjects] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Debounce search term
   useEffect(() => {
@@ -23,28 +24,49 @@ export default function ProjectsPage() {
   }, [searchTerm]);
 
   useEffect(() => {
-  // This listener waits for Supabase to actually load the session from storage
-    if(!supabase) return;
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-    if (session?.access_token) {
+    if (!supabase) {
+      setIsLoading(false);
+      return;
+    }
+
+    const loadProjects = async (accessToken?: string | null) => {
+      if (!accessToken){
+         setIsLoading(false);
+         return;
+        }
+        setIsLoading(true);
       try {
-        const res = await fetch('/api/projects', {
+        const res = await fetch("/api/projects", {
           headers: {
-            Authorization: `Bearer ${session.access_token}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         });
-        if (!res.ok) throw new Error('Failed to load the Projects');
+        if (!res.ok) throw new Error("Failed to load the Projects");
         const body = await res.json();
         setProjects(body.projects || []);
       } catch (error) {
         console.error("Error in loading projects ", error);
+      } finally{
+        setIsLoading(false);
       }
-    } else if (event === 'INITIAL_SESSION' && !session) {
-       // Optional: handle the case where the user is definitely not logged in
-       console.warn("No session found after initialization");
-    }
-  });
-  return () => subscription.unsubscribe();
+    };
+
+    // Load once on mount using the current session.
+    supabase.auth
+    .getSession()
+    .then(({ data }) => loadProjects(data.session?.access_token))
+    .catch((error) => {
+      console.error("Error in loading session ", error);
+      setIsLoading(false);
+    });
+    // Refetch whenever auth state changes.
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      loadProjects(session?.access_token);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
   const filteredProjects = projects.filter((project) => {
     const query = debouncedSearchTerm.toLowerCase();
@@ -115,11 +137,17 @@ export default function ProjectsPage() {
         onCreated={handleProjectCreated}
       />
 
-      {filteredProjects.length > 0 ? (
+      {isLoading ? (
+        <div className="panel flex flex-col items-center justify-center py-20 text-center">
+          <div className="mb-4 h-10 w-10 rounded-full bg-slate-100 animate-pulse" />
+          <h3 className="text-lg font-semibold text-slate-900">Loading projects...</h3>
+          <p className="mt-1 text-slate-500">Fetching your latest updates.</p>
+        </div>
+      ) : filteredProjects.length > 0 ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {filteredProjects.map((project, index) => (
+          {filteredProjects.map((project) => (
             <div
-              key={index}
+              key={project.id}
               className="panel group cursor-pointer p-5 transition hover:-translate-y-1"
             >
               <h2 className="mb-2 text-lg font-semibold text-slate-900 group-hover:text-emerald-700">
