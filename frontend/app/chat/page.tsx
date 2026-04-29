@@ -9,6 +9,7 @@ type Message = {
   text: string;
   time?: string;
   status?: string;
+  reactions?: { [emoji: string]: number };
 };
 
 export default function ChatPage() {
@@ -89,6 +90,15 @@ socket.on("newMessage", (msg) => {
         )
       );
     });
+    socket.on("reactionUpdate", ({ messageId, reactions }) => {
+  setMessages((prev) =>
+    prev.map((msg) =>
+      msg.id === messageId
+        ? { ...msg, reactions }
+        : msg
+    )
+  );
+});
 
     return () => {
       socket.disconnect();
@@ -142,6 +152,16 @@ socket.on("newMessage", (msg) => {
       socketRef.current.emit("typing", username);
     }
   }
+  function handleReact(messageId: string | undefined, emoji: string) {
+  if (!messageId) return;
+
+  // send reaction to server
+  socketRef.current?.emit("react", { messageId, emoji, username,});
+}
+
+
+  
+
 
   return (
     <div className="p-4 max-w-4xl mx-auto relative">
@@ -182,7 +202,7 @@ socket.on("newMessage", (msg) => {
   className="h-[400px] overflow-y-auto space-y-2 border p-3"
 >
         {messages.map((msg, i) => {
-           const prevMsg = messages[i - 1];
+          const prevMsg = messages[i - 1];
           const isSameUser = prevMsg && prevMsg.user === msg.user;
           const isMe = msg.user === username;
 
@@ -214,6 +234,27 @@ socket.on("newMessage", (msg) => {
                 )}
 
                 <p>{msg.text}</p>
+                <div className="flex gap-2 mt-1 text-sm">
+                  {["👍", "❤️", "😂"].map((emoji) => (
+                    <button
+                      key={emoji}
+                      onClick={() => handleReact(msg.id, emoji)}
+                      className="hover:scale-110 transition"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  {/* counts will show here*/}
+                    {msg.reactions &&
+                      Object.entries(msg.reactions).filter(([_, count]) => count > 0).map(([emoji, count]) => (
+                        <span
+                        key={emoji}
+                        className={`px-2 py-0.5 rounded-full text-xs ${isMe ? "bg-white text-black" : "bg-gray-200"}`}
+                      >
+                        {emoji} {count}
+                      </span>
+                    ))}
+                  </div>
 
                 <p className="text-xs text-right opacity-70">
                   {msg.time} {msg.status === "seen" ? "✓✓" : "✓"}
