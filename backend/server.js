@@ -19,6 +19,9 @@ app.set("io", io);
 
 const onlineUsers = new Map(); // socket.id -> username
 
+// store reactions in memory
+const reactionsStore = {};
+
 app.use(cors());
 app.use(express.json());
 
@@ -38,12 +41,37 @@ io.on("connection", (socket) => {
     io.emit("onlineUsers", Array.from(onlineUsers.values()));
   });
 
-  // TYPING
-  socket.on("typing", (username) => {
-    socket.broadcast.emit("typing", username);
-  });
+  // typing
+  socket.on("react", ({ messageId, emoji, username }) => {
+  if (!reactionsStore[messageId]) {
+    reactionsStore[messageId] = {};
+  }
 
-  // SEEN
+  if (!reactionsStore[messageId][emoji]) {
+    reactionsStore[messageId][emoji] = new Set();
+  }
+
+  const users = reactionsStore[messageId][emoji];
+
+  //  toggle
+  if (users.has(username)) {
+    users.delete(username); 
+  } else {
+    users.add(username); 
+  }
+
+  // convert Set ->count
+  const formatted = {};
+  for (const emo in reactionsStore[messageId]) {
+    formatted[emo] = reactionsStore[messageId][emo].size;
+  }
+
+  io.emit("reactionUpdate", {
+    messageId,
+    reactions: formatted,
+  });
+});
+  // seen
   socket.on("seen", (messageId) => {
     io.emit("messageSeen", messageId);
   });
@@ -58,5 +86,5 @@ io.on("connection", (socket) => {
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
