@@ -1,152 +1,336 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import { Activity, FolderOpen, MessageSquare, ShieldCheck, Sparkles } from "lucide-react";
-
-const links = [
-  {
-    href: "/projects",
-    label: "Projects",
-    desc: "Track delivery and create new initiatives.",
-    icon: FolderOpen,
-  },
-  {
-    href: "/workspace",
-    label: "Workspace",
-    desc: "See active developers and live activity.",
-    icon: Activity,
-  },
-  {
-    href: "/chat",
-    label: "Chat",
-    desc: "Keep team communication in one place.",
-    icon: MessageSquare,
-  },
-];
-
-const stats = [
-  {
-    title: "Velocity",
-    value: "+18%",
-    detail: "Growth over last sprint",
-    icon: Activity,
-  },
-  {
-    title: "Deploys",
-    value: "24",
-    detail: "Successful releases this week",
-    icon: Sparkles,
-  },
-  {
-    title: "Incidents",
-    value: "2",
-    detail: "Minor issues currently open",
-    icon: ShieldCheck,
-  },
-];
-
-const activity = [
-  "Sprint planning started for Q2 roadmap.",
-  "New design review added to Marketing campaign.",
-  "Standup summary posted in team chat.",
-];
+import {
+  Search,
+  TrendingUp,
+  Rocket,
+  AlertTriangle,
+  FolderKanban,
+  Users,
+  MessageSquare,
+} from "lucide-react";
+import {
+  LineChart,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 export default function Dashboard() {
+  const [filter, setFilter] = useState("This Month");
+
+  const user = {
+    name: "Anshi",
+    role: "admin",
+  };
+
+  // ✅ Dynamic chart data based on filter
+  const chartData =
+    filter === "This Week"
+      ? [
+          { name: "Mon", value: 10 },
+          { name: "Tue", value: 25 },
+          { name: "Wed", value: 18 },
+          { name: "Thu", value: 40 },
+          { name: "Fri", value: 32 },
+          { name: "Sat", value: 50 },
+          { name: "Sun", value: 45 },
+        ]
+      : [
+          { name: "Week 1", value: 20 },
+          { name: "Week 2", value: 35 },
+          { name: "Week 3", value: 50 },
+          { name: "Week 4", value: 70 },
+        ];
+
+  const stats = [
+    { title: "Velocity", value: "+18%", icon: TrendingUp },
+    { title: "Deploys", value: "24", icon: Rocket },
+    { title: "Incidents", value: "2", icon: AlertTriangle },
+  ];
+
+  const team = [
+    { name: "Alex", img: "https://i.pravatar.cc/40?img=1" },
+    { name: "Sam", img: "https://i.pravatar.cc/40?img=2" },
+    { name: "Jordan", img: "https://i.pravatar.cc/40?img=3" },
+    { name: "Taylor", img: "https://i.pravatar.cc/40?img=4" },
+  ];
+
   return (
-    <div className="mx-auto w-full max-w-6xl p-4 md:p-10">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="chip inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wide">
-            Command Center
-          </p>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
-            Dashboard
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm text-slate-600 sm:text-base">
-            Get a quick pulse on your team, upcoming work, and the most important projects right now.
-          </p>
+    <div className="min-h-screen bg-slate-50 p-6 md:p-10">
+      <div className="mx-auto max-w-7xl space-y-8">
+        {/* 🔍 SEARCH */}
+        <div className="flex items-center gap-3 w-full max-w-2xl bg-white px-5 py-3 rounded-2xl border shadow-sm focus-within:ring-2 focus-within:ring-emerald-500 transition">
+          <Search size={18} className="text-slate-400" />
+          <input
+            placeholder="Search projects, tasks, or messages..."
+            className="w-full outline-none text-sm"
+          />
         </div>
 
-        <div className="flex flex-wrap gap-3">
-          <Link href="/projects" className="accent-btn rounded-xl px-4 py-2 text-sm font-semibold transition">
-            New Sprint Plan
-          </Link>
-          <Link href="/workspace" className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-            View Workspace
-          </Link>
-        </div>
-      </div>
+        {/* 👋 HEADER */}
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">
+              Dashboard Overview
+            </h1>
+            <p className="text-slate-500 mt-1">Welcome back, {user.name} 👋</p>
+          </div>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <div key={stat.title} className="panel p-5">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    {stat.title}
-                  </p>
-                  <p className="mt-2 text-3xl font-bold text-slate-900">{stat.value}</p>
-                </div>
-                <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-teal-700">
-                  <Icon className="h-5 w-5" />
-                </div>
-              </div>
-              <p className="mt-4 text-sm text-slate-500">{stat.detail}</p>
-            </div>
-          );
-        })}
-      </div>
+          {/* 🟢 ACTION BUTTONS */}
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/projects"
+              className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition"
+            >
+              📁 Projects
+            </Link>
+            <Link
+              href="/workspace"
+              className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 transition"
+            >
+              👥 Workspace
+            </Link>
 
-      <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
-        <div className="grid gap-4 sm:grid-cols-2">
-          {links.map((item) => {
-            const Icon = item.icon;
-            return (
+            {/* 🔐 ROLE-BASED BUTTON */}
+            {user.role === "admin" && (
               <Link
-                key={item.href}
-                href={item.href}
-                className="panel flex flex-col gap-4 p-5 transition hover:-translate-y-1"
+                href="/projects"
+                className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-emerald-800 transition"
               >
-                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-teal-700">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-slate-900">{item.label}</h2>
-                  <p className="mt-2 text-sm text-slate-600">{item.desc}</p>
-                </div>
-                <p className="mt-auto text-sm font-medium text-teal-700">Open</p>
+                ➕ New Sprint
               </Link>
+            )}
+          </div>
+        </div>
+
+        {/* 📊 STATS */}
+        <div className="grid gap-6 sm:grid-cols-3">
+          {stats.map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <div
+                key={stat.title}
+                className="bg-white p-6 rounded-2xl border shadow-sm hover:shadow-lg transition hover:-translate-y-1"
+              >
+                <div className="flex justify-between">
+                  <p className="text-sm text-slate-500">{stat.title}</p>
+                  <Icon size={18} className="text-slate-400" />
+                </div>
+                <p className="mt-3 text-3xl font-bold text-slate-900">
+                  {stat.value}
+                </p>
+              </div>
             );
           })}
         </div>
 
-        <div className="panel p-5">
-          <div className="flex items-center justify-between gap-3">
+        {/* 📈 CHART */}
+        <div className="bg-white p-6 rounded-2xl border shadow-sm">
+          <div className="flex justify-between items-center mb-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Recent activity
+              <h2 className="text-lg font-semibold text-slate-900">
+                Productivity Analytics
+              </h2>
+              <p className="text-sm text-slate-500">
+                Track your team's performance trends over time
               </p>
-              <h2 className="mt-2 text-xl font-semibold text-slate-900">What’s happening</h2>
             </div>
-            <span className="chip inline-flex px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
-              Live updates
-            </span>
+
+            {/* ✅ FILTER BUTTONS */}
+            <div className="flex gap-2 bg-slate-100 p-1 rounded-xl">
+              {["This Week", "This Month"].map((item) => (
+                <button
+                  key={item}
+                  onClick={() => setFilter(item)}
+                  className={`px-4 py-1.5 text-sm rounded-lg transition ${
+                    filter === item
+                      ? "bg-white shadow text-slate-900"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="mt-6 space-y-4">
-            {activity.map((item) => (
-              <div key={item} className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                {item}
+          {/* ✅ FIX: Use inline styles for guaranteed dimensions */}
+          <div style={{ width: "100%", height: "300px" }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#10b981"
+                  strokeWidth={3}
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* 📊 INSIGHTS OVERVIEW */}
+        <div>
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold text-slate-900">
+              Insights Overview
+            </h2>
+            <p className="text-sm text-slate-500">
+              Key analytics and intelligent recommendations to guide your
+              workflow.
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-3">
+            {/* 📊 PROJECT INSIGHTS */}
+            <div className="bg-white p-6 rounded-2xl border shadow-sm hover:shadow-md transition">
+              <h3 className="text-lg font-semibold text-slate-900">
+                Project Insights
+              </h3>
+
+              <div className="mt-4 space-y-3 text-sm text-slate-600">
+                <p>✔ 12 tasks completed this week</p>
+                <p>✔ 3 projects ahead of schedule</p>
+                <p>⚠ 1 project needs attention</p>
+              </div>
+
+              <Link
+                href="/projects"
+                className="mt-5 inline-block text-sm font-medium text-emerald-600 hover:underline"
+              >
+                View detailed report →
+              </Link>
+            </div>
+
+            {/* 🤖 AI INSIGHTS */}
+            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white p-6 rounded-2xl shadow-sm hover:shadow-md transition">
+              <h3 className="text-lg font-semibold">AI Insights 🤖</h3>
+
+              <p className="mt-3 text-sm text-emerald-100">
+                Your productivity increased by 18%. Completing pending tasks
+                today can further boost efficiency by 10%.
+              </p>
+
+              <button className="mt-5 bg-white text-emerald-700 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-slate-100 transition">
+                View Recommendations
+              </button>
+            </div>
+
+            {/* 🚧 PROJECTS IN PROGRESS */}
+            <div className="bg-white p-6 rounded-2xl border shadow-sm hover:shadow-md transition">
+              <h3 className="text-lg font-semibold text-slate-900">
+                Projects In Progress
+              </h3>
+
+              <div className="mt-4 space-y-4">
+                {[
+                  { name: "Project Alpha", progress: "70%" },
+                  { name: "Client Dashboard", progress: "50%" },
+                  { name: "AI Assistant", progress: "85%" },
+                ].map((project) => (
+                  <div key={project.name}>
+                    <div className="flex justify-between text-sm text-slate-600">
+                      <span>{project.name}</span>
+                      <span>{project.progress}</span>
+                    </div>
+
+                    <div className="mt-1 h-2 bg-slate-200 rounded-full">
+                      <div
+                        className="h-2 bg-emerald-500 rounded-full"
+                        style={{ width: project.progress }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Link
+                href="/projects"
+                className="mt-5 inline-block text-sm font-medium text-emerald-600 hover:underline"
+              >
+                Manage projects →
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* 👥 TEAM */}
+        <div className="bg-white p-6 rounded-2xl border shadow-sm">
+          <h2 className="text-lg font-semibold mb-4 text-slate-900">
+            Team Members
+          </h2>
+
+          <div className="flex gap-5">
+            {team.map((member) => (
+              <div key={member.name} className="text-center">
+                <img
+                  src={member.img}
+                  className="w-12 h-12 rounded-full border hover:scale-105 transition"
+                />
+                <p className="text-xs mt-2 text-slate-600">{member.name}</p>
               </div>
             ))}
           </div>
+        </div>
 
-          <Link href="/chat" className="mt-6 inline-flex items-center rounded-xl bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-700 transition hover:bg-teal-100">
-            <MessageSquare className="mr-2 h-4 w-4" />
-            Open team chat
-          </Link>
+        {/* 📌 BOTTOM */}
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="bg-white p-6 rounded-2xl border shadow-sm">
+            <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
+            <ul className="text-sm text-slate-600 space-y-2">
+              <li>✔ New sprint created</li>
+              <li>✔ Task updated in Project Alpha</li>
+              <li>✔ Team member joined workspace</li>
+            </ul>
+          </div>
+
+          <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-sm">
+            <h2 className="text-lg font-semibold">Upgrade Workspace 🚀</h2>
+            <p className="text-sm mt-2 text-slate-300">
+              Unlock advanced analytics, integrations, and priority support.
+            </p>
+
+            <button className="mt-4 bg-white text-slate-900 px-4 py-2 rounded-xl text-sm font-semibold hover:scale-105 transition">
+              Upgrade Now
+            </button>
+          </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* 🔹 Buttons */
+const btn =
+  "rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition";
+
+const btnLight =
+  "rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 transition";
+
+const btnStrong =
+  "rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 transition";
+
+/* 🔹 Card */
+function Card({ icon, title, link }: any) {
+  return (
+    <div className="bg-white p-6 rounded-2xl border shadow-sm hover:shadow-lg transition hover:-translate-y-1">
+      <div className="mb-3 text-slate-700">{icon}</div>
+      <h3 className="font-semibold text-slate-900">{title}</h3>
+      <Link href={link} className="mt-4 inline-block text-sm hover:underline">
+        Open →
+      </Link>
     </div>
   );
 }
