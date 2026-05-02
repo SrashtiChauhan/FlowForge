@@ -71,6 +71,10 @@ io.on("connection", (socket) => {
     reactions: formatted,
   });
 });
+socket.on("task-moved", (task) => {
+    console.log("Task moved:", task);
+    io.emit("task-moved", task);
+  });
   // seen
   socket.on("seen", (messageId) => {
     io.emit("messageSeen", messageId);

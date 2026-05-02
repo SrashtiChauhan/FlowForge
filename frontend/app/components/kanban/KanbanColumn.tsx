@@ -38,15 +38,25 @@ export function KanbanColumn({ column, tasks, onCreateTask, onDeleteTask }: Prop
       <div
         ref={setNodeRef}
         className={`flex-1 p-3 transition-colors ${
-          isOver ? "bg-indigo-50/50" : ""
+          isOver ? "bg-indigo-100 border-2 border-indigo-400 scale-[1.02]" : ""
         }`}
         style={{ minHeight: "200px" }}
       >
         <div className="flex flex-col gap-3">
           <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-            {tasks.map((task) => (
-              <KanbanCard key={task.id} task={task} onDelete={() => onDeleteTask(task.id)} />
-            ))}
+            {tasks.length === 0 ? (
+              <div className="flex h-32 items-center justify-center text-sm text-gray-400 border-2 border-dashed rounded-lg">
+                No tasks yet
+              </div>
+            ) : (
+              tasks.map((task) => (
+                <KanbanCard
+                  key={task.id}
+                  task={task}
+                  onDelete={() => onDeleteTask(task.id)}
+                />
+              ))
+            )}
           </SortableContext>
         </div>
       </div>
