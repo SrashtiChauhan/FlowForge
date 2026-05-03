@@ -19,11 +19,11 @@ export const getTasks = async (req, res) => {
 // Create a new task
 export const createTask = async (req, res) => {
   try {
-    const { title, description, status, project_id, position } = req.body;
+    const { title, description, status, position } = req.body;
     
     const { data, error } = await supabase
       .from("tasks")
-      .insert([{ title, description, status, project_id, position }])
+      .insert([{ title, description, status, position }])
       .select();
 
     if (error) throw error;

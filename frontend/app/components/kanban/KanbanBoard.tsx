@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+
 import {
   DndContext,
   closestCorners,
@@ -163,12 +164,13 @@ export function KanbanBoard() {
       }
     }
 
-    const activeIndex = tasks.findIndex((t) => t.id === activeId);
-    const position = activeIndex;
+    const sameColumnTasks = tasks.filter(t => t.status === newStatus);
+    const newPosition = sameColumnTasks.length;
+    const updatedTask = { ...activeTask, status: newStatus, position: newPosition };
+    const newTasksList = tasks.map(t =>
+      t.id === activeId ? updatedTask : t
+    );
 
-    const updatedTask = { ...activeTask, status: newStatus, position };
-    
-    const newTasksList = tasks.map(t => t.id === activeId ? updatedTask : t);
     setTasks(newTasksList);
 
     try {
@@ -177,7 +179,7 @@ export function KanbanBoard() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: newStatus, position }),
+        body: JSON.stringify({ status: newStatus, position: newPosition }),
       });
 
       if (res.ok) {
