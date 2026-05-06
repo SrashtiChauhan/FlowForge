@@ -173,55 +173,90 @@ export function KanbanBoard() {
   };
 
   const handleDragEnd = async (event: any) => {
-    setActiveTask(null);
-    const { active, over } = event;
-    if (!over) return;
+  setActiveTask(null);
 
-    const activeId = active.id;
-    const overId = over.id;
+  const { active, over } = event;
+  if (!over) return;
 
-    const activeTask = tasks.find((t) => t.id === activeId);
-    if (!activeTask) return;
+  const activeId = active.id;
+  const overId = over.id;
 
-    let newStatus = activeTask.status;
-    
-    if (over.data.current?.type === "Column") {
-      newStatus = over.id as any;
-    } else if (over.data.current?.type === "Task") {
-      const overTask = tasks.find((t) => t.id === overId);
-      if (overTask) {
-        newStatus = overTask.status;
-      }
+  const activeTask = tasks.find((t) => t.id === activeId);
+  if (!activeTask) return;
+
+  let newStatus = activeTask.status;
+
+  if (over.data.current?.type === "Column") {
+    newStatus = over.id as any;
+  } else if (over.data.current?.type === "Task") {
+    const overTask = tasks.find((t) => t.id === overId);
+    if (overTask) {
+      newStatus = overTask.status;
     }
+  }
 
-    const sameColumnTasks = tasks.filter(t => t.status === newStatus);
-    const newPosition = sameColumnTasks.length;
-    const updatedTask = { ...activeTask, status: newStatus, position: newPosition };
-    const newTasksList = tasks.map(t =>
-      t.id === activeId ? updatedTask : t
+  // Create updated task list
+  let updatedTasks = [...tasks];
+
+  // Update dragged task status
+  updatedTasks = updatedTasks.map((task) =>
+    task.id === activeId
+      ? { ...task, status: newStatus }
+      : task
+  );
+
+  // Get tasks of affected column
+  const columnTasks = updatedTasks
+    .filter((task) => task.status === newStatus)
+    .sort((a, b) => a.position - b.position);
+
+  // Reassign positions sequentially
+  const reorderedTasks = columnTasks.map((task, index) => ({
+    ...task,
+    position: index,
+  }));
+
+  // Merge back updated positions
+  updatedTasks = updatedTasks.map((task) => {
+    const updated = reorderedTasks.find((t) => t.id === task.id);
+    return updated || task;
+  });
+
+  // Update frontend state
+  setTasks(updatedTasks);
+
+  try {
+    // Send updates for all affected tasks
+    await Promise.all(
+      reorderedTasks.map((task) =>
+        fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/tasks/${task.id}`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              status: task.status,
+              position: task.position,
+            }),
+          }
+        )
+      )
     );
 
-    setTasks(newTasksList);
-
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/tasks/${activeId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: newStatus, position: newPosition }),
+    // Emit socket updates
+    if (socket) {
+      reorderedTasks.forEach((task) => {
+        socket.emit("task-moved", task);
       });
-
-      if (res.ok) {
-        const savedTask = await res.json();
-        if (socket) {
-          socket.emit("task-moved", savedTask);
-        }
-      }
-    } catch (error) {
-      console.error("Failed to update task", error);
     }
-  };
+  } catch (error) {
+    console.error("Failed to update task positions", error);
+  }
+};
+
+    
 
   const handleCreateTask = async (columnId: string) => {
     const title = window.prompt("Task Title:");
