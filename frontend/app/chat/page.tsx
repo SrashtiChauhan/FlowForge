@@ -163,25 +163,41 @@ socket.on("newMessage", (msg) => {
   
 
 
-  return (
-    <div className="p-4 max-w-4xl mx-auto relative">
-      <h1 className="text-2xl font-bold mb-3">Team Chat</h1>
+return (
+  <div className="mx-auto flex max-w-6xl flex-col gap-6 p-6 md:p-10 relative">
 
-      {/* USERNAME */}
-      <input
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        placeholder="Enter name"
-        className="mb-3 p-2 border rounded w-full"
-      />
+    <div className="rounded-3xl border border-(--line) bg-white p-6 shadow-sm">
+      <h1 className="text-3xl font-bold text-slate-800">
+        Team Chat
+      </h1>
 
-      {/* ONLINE USERS */}
-      <div className="mb-2 text-sm text-green-600">
-        Online: {onlineUsers.join(", ")}
-      </div>
+      <p className="mt-1 text-sm text-slate-500">
+        Collaborate and communicate with your team in real time.
+      </p>
+    </div>
 
-      {/* MESSAGES */}
-      <div
+    {/* USERNAME */}
+    <input
+      value={username}
+      onChange={(e) => setUsername(e.target.value)}
+      placeholder="Enter name"
+      className="w-full rounded-2xl border border-(--line) bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-slate-400"
+    />
+
+    {/* ONLINE USERS */}
+    <div className="flex items-center gap-2 text-sm text-slate-600">
+      <div className="h-2 w-2 rounded-full bg-green-500"></div>
+
+      <span className="font-medium">
+        Online:
+      </span>
+    <span>
+      {onlineUsers.join(", ")}
+    </span>
+  </div>
+
+    {/* MESSAGES */}
+    <div
   ref={containerRef}
   onScroll={() => {
     const el = containerRef.current;
@@ -199,7 +215,7 @@ socket.on("newMessage", (msg) => {
       setUnreadCount(0);
     }
   }}
-  className="h-[400px] overflow-y-auto space-y-2 border p-3"
+  className="h-[500px] overflow-y-auto rounded-3xl border border-(--line) bg-white p-5 shadow-sm"
 >
         {messages.map((msg, i) => {
           const prevMsg = messages[i - 1];
@@ -214,20 +230,20 @@ socket.on("newMessage", (msg) => {
   }`}
 >
               <div
-                className={`p-3 max-w-xs shadow ${
-  isMe
-    ? `bg-green-500 text-white ${
-        isSameUser
-          ? "rounded-lg rounded-tr-2xl"
-          : "rounded-2xl rounded-br-md"
-      }`
-    : `bg-gray-200 text-black ${
-        isSameUser
-          ? "rounded-lg rounded-tl-2xl"
-          : "rounded-2xl rounded-bl-md"
-      }`
-}`}
-              >
+                className={`max-w-sm rounded-2xl p-4 shadow-sm ${
+                  isMe
+                  ? `bg-teal-700 text-white ${
+                    isSameUser
+                    ? "rounded-lg rounded-tr-2xl"
+                    : "rounded-2xl rounded-br-md"
+                  }`
+                  : `bg-slate-100 text-slate-800 ${
+                        isSameUser
+                        ? "rounded-lg rounded-tl-2xl"
+                        : "rounded-2xl rounded-bl-md"
+                      }`
+                    }`}
+>
                 {/* Show name only for others */}
                 {!isMe && !isSameUser && (
                       <p className="font-semibold text-sm">{msg.user}</p>
@@ -256,7 +272,7 @@ socket.on("newMessage", (msg) => {
                     ))}
                   </div>
 
-                <p className="text-xs text-right opacity-70">
+                <p className="mt-2 text-right text-[11px] opacity-60">
                   {msg.time} {msg.status === "seen" ? "✓✓" : "✓"}
                 </p>
               </div>
@@ -288,16 +304,16 @@ socket.on("newMessage", (msg) => {
       )}
 
       {/* INPUT */}
-      <div className="flex mt-3 gap-2">
+      <div className="mt-4 flex gap-3">
         <input
           value={input}
           onChange={handleTyping}
           placeholder="Type message"
-          className="flex-1 border p-2 rounded"
+          className="flex-1 rounded-2xl border border-(--line) bg-white px-4 py-3 text-sm shadow-sm outline-none focus:border-slate-400"
         />
         <button
           onClick={handleSend}
-          className="bg-green-600 text-white px-4 rounded"
+          className="rounded-2xl bg-teal-700 px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-teal-800"
         >
           Send
         </button>
