@@ -25,7 +25,9 @@ export default function ChatPage() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
-const [audioBlob, setAudioBlob] = useState<string | null>(null);
+  const [audioBlob, setAudioBlob] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState("all");
 
 const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 const audioChunksRef = useRef<Blob[]>([]);
@@ -244,6 +246,24 @@ function stopRecording() {
     socketRef.current?.emit("react", { messageId, emoji, username,});
   }
 
+const filteredMessages = messages.filter((msg) => {
+  const query = searchQuery.toLowerCase();
+
+  const matchesSearch =
+    msg.text?.toLowerCase().includes(query) ||
+    msg.user?.toLowerCase().includes(query) ||
+    (query === "image" && msg.image) ||
+    (query === "voice" && msg.audio);
+  if (filterType === "image") {
+    return matchesSearch && msg.image;
+  }
+
+  if (filterType === "voice") {
+    return matchesSearch && msg.audio;
+  }
+
+  return matchesSearch;
+});
 
   
 
@@ -279,6 +299,66 @@ return (
       <span>{onlineUsers.join(", ")}</span>
     </div>
 
+    {/* SEARCH + FILTER */}
+    <div className="flex flex-col gap-3 rounded-2xl border border-(--line) bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
+
+      {/* SEARCH INPUT */}
+      <div className="relative flex-1">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search messages or users..."
+          className="w-full rounded-xl border border-(--line) px-4 py-2 pr-10 text-sm outline-none transition focus:border-slate-400"
+        />
+
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 hover:text-slate-600"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
+      {/* FILTER BUTTONS */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setFilterType("all")}
+          className={`rounded-xl px-4 py-2 text-sm transition-all duration-200 ${
+            filterType === "all"
+            ? "bg-teal-700 text-white"
+            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+          }`}
+        >
+          All
+        </button>
+
+        <button
+          onClick={() => setFilterType("image")}
+          className={`rounded-xl px-4 py-2 text-sm transition ${
+            filterType === "image"
+            ? "bg-teal-700 text-white"
+            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+          }`}
+        >
+          Images
+        </button>
+
+        <button
+          onClick={() => setFilterType("voice")}
+          className={`rounded-xl px-4 py-2 text-sm transition ${
+            filterType === "voice"
+            ? "bg-teal-700 text-white"
+            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+          }`}
+        >
+          Voice
+        </button>
+      </div>
+    </div>
+
     {/* MESSAGES */}
     <div
       ref={containerRef}
@@ -299,8 +379,8 @@ return (
       }}
       className="h-[500px] overflow-y-auto rounded-3xl border border-(--line) bg-white p-5 shadow-sm"
     >
-      {messages.map((msg, i) => {
-        const prevMsg = messages[i - 1];
+      {filteredMessages.map((msg, i) => {
+        const prevMsg = filteredMessages[i - 1];
         const isSameUser = prevMsg && prevMsg.user === msg.user;
         const isMe = msg.user === username;
 
@@ -336,7 +416,25 @@ return (
               {/* TEXT */}
               {msg.text && (
                 <p className="break-words text-sm leading-relaxed">
-                  {msg.text}
+                  {searchQuery ? (
+                    msg.text.split(
+                      new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,"gi")
+                    ).map((part, index) =>
+                      part.toLowerCase() ===
+                      searchQuery.toLowerCase() ? (
+                        <mark
+                          key={index}
+                          className="rounded bg-yellow-200 px-1 text-black"
+                        >
+                          {part}
+                        </mark>
+                      ) : (
+                        part
+                      )
+                    )
+                  ) : (
+                    msg.text
+                  )}
                 </p>
               )}
 
@@ -398,6 +496,18 @@ return (
           </div>
         );
       })}
+
+      {filteredMessages.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-10 text-center">
+          <p className="text-sm font-medium text-slate-500">
+            No matching messages found
+          </p>
+
+          <p className="mt-1 text-xs text-slate-400">
+            Try a different search or filter.
+          </p>
+        </div>
+      )}
 
       <div ref={bottomRef}></div>
     </div>
