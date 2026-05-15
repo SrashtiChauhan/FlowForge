@@ -332,6 +332,24 @@ function stopRecording() {
 }
 
 
+const filteredMessages = messages.filter((msg) => {
+  const query = searchQuery.toLowerCase();
+
+  const matchesSearch =
+    msg.text?.toLowerCase().includes(query) ||
+    msg.user?.toLowerCase().includes(query) ||
+    (query === "image" && msg.image) ||
+    (query === "voice" && msg.audio);
+  if (filterType === "image") {
+    return matchesSearch && msg.image;
+  }
+
+  if (filterType === "voice") {
+    return matchesSearch && msg.audio;
+  }
+
+  return matchesSearch;
+});
 
   
 
@@ -428,8 +446,8 @@ return (
       }}
       className="h-[500px] overflow-y-auto rounded-3xl border border-(--line) bg-white p-5 shadow-sm"
     >
-      {messages.map((msg, i) => {
-        const prevMsg = messages[i - 1];
+      {filteredMessages.map((msg, i) => {
+        const prevMsg = filteredMessages[i - 1];
         const isSameUser = prevMsg && prevMsg.user === msg.user;
         const isMe = msg.user === username;
 
@@ -632,6 +650,18 @@ return (
           </div>
         );
       })}
+
+      {filteredMessages.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-10 text-center">
+          <p className="text-sm font-medium text-slate-500">
+            No matching messages found
+          </p>
+
+          <p className="mt-1 text-xs text-slate-400">
+            Try a different search or filter.
+          </p>
+        </div>
+      )}
 
       <div ref={bottomRef}></div>
     </div>
