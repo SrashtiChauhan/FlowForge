@@ -14,6 +14,11 @@ type Message = {
   image?: string;
   audio?: string;
   reactions?: { [emoji: string]: number };
+  replyTo?: {
+    user: string;
+    text: string;
+  };
+  isPinned?: boolean;
 };
 
 export default function ChatPage() {
@@ -25,10 +30,17 @@ export default function ChatPage() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
-const [audioBlob, setAudioBlob] = useState<string | null>(null);
-
-const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-const audioChunksRef = useRef<Blob[]>([]);
+  const [audioBlob, setAudioBlob] = useState<string | null>(null);
+  
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState("all");
+  const [activeMessageId, setActiveMessageId] = useState<string | null>(null);
+  const matchedMessageRef = useRef<HTMLDivElement | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editedText, setEditedText] = useState("");
 
   const socketRef = useRef<Socket | null>(null);
   const typingTimeoutRef = useRef<any>(null);
@@ -37,6 +49,7 @@ const audioChunksRef = useRef<Blob[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const isAtBottomRef = useRef(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  
 
   //  SOCKET SETUP
   useEffect(() => {
@@ -121,12 +134,22 @@ socket.on("newMessage", (msg) => {
     }
   }, [username]);
 
-  //  SMART AUTO SCROLL (FIXED)
+  // SMART AUTO SCROLL (FIXED)
   useEffect(() => {
     if (isAtBottomRef.current) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+
+  // SEARCH AUTO SCROLL
+  useEffect(() => {
+    if (searchQuery && matchedMessageRef.current) {
+      matchedMessageRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, [searchQuery]);
 
   // MARK ONLY LAST MESSAGE AS SEEN 
   useEffect(() => {
@@ -143,17 +166,48 @@ socket.on("newMessage", (msg) => {
   if ((!input.trim() && !selectedImage && !audioBlob) || !username.trim()) return;
 
   const localMessage: Message = {
-  id: Date.now().toString(),
-  user: username,
-  text: input,
-  image: selectedImage || undefined,
-  audio: audioBlob || undefined,
-  time: new Date().toLocaleTimeString(),
-  status: "sent",
-};
+    id: Date.now().toString(),
+    user: username,
+    text: input,
+    time: new Date().toLocaleTimeString(),
+    status: "sent",
 
-  // immediately show message in UI
-  setMessages((prev) => [...prev, localMessage]);
+    replyTo: replyingTo
+      ? {
+        user: replyingTo.user,
+        text: replyingTo.text,
+      }
+    : undefined,
+
+   ...(selectedImage && { image: selectedImage }),
+   ...(audioBlob && { audio: audioBlob }),
+  };
+
+  
+  // EDIT EXISTING MESSAGE
+  if (editingMessageId) {
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === editingMessageId
+          ? {
+              ...msg,
+              text: input,
+            }
+          : msg
+      )
+    );
+
+    setEditingMessageId(null);
+    setEditedText("");
+    setInput("");
+
+    return;
+  }
+ 
+  // ADD NEW MESSAGE
+  else {
+    setMessages((prev) => [...prev, localMessage]);
+  }
 
   // send text to backend
   await fetch("http://localhost:5000/api/chat", {
@@ -171,6 +225,7 @@ socket.on("newMessage", (msg) => {
   setInput("");
   setSelectedImage(null);
   setAudioBlob(null);
+  setReplyingTo(null);
   // auto scroll
   bottomRef.current?.scrollIntoView({
     behavior: "smooth",
@@ -243,6 +298,39 @@ function stopRecording() {
     // send reaction to server
     socketRef.current?.emit("react", { messageId, emoji, username,});
   }
+  function handleReply(msg: Message) {
+    setReplyingTo(msg);
+  }
+
+  function handleCopy(text: string) {
+    navigator.clipboard.writeText(text);
+  }
+
+  function handleDelete(messageId?: string) {
+    setMessages((prev) =>
+      prev.filter((msg) => msg.id !== messageId)
+    );
+  }
+
+  function handlePin(messageId?: string) {
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === messageId
+          ? { ...msg, isPinned: !msg.isPinned }
+          : msg
+      )
+    );
+  }
+  function handleEdit(messageId?: string, currentText?: string) {
+    if (!messageId || !currentText) return;
+
+    setEditingMessageId(messageId);
+    setEditedText(currentText);
+
+    // load message into input
+    setInput(currentText);
+}
+
 
 
   
@@ -279,6 +367,47 @@ return (
       <span>{onlineUsers.join(", ")}</span>
     </div>
 
+    {/* SEARCH + FILTER */}
+<div className="flex flex-col gap-3 rounded-2xl border border-(--line) bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
+
+  {/* SEARCH */}
+  <div className="relative flex-1">
+    <input
+      type="text"
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      placeholder="Search messages or users..."
+      className="w-full rounded-xl border border-(--line) px-4 py-2 pr-10 text-sm outline-none transition focus:border-slate-400"
+    />
+
+    {searchQuery && (
+      <button
+        onClick={() => setSearchQuery("")}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 hover:text-slate-600"
+      >
+        ✕
+      </button>
+    )}
+  </div>
+
+  {/* FILTER BUTTONS */}
+  <div className="flex gap-2">
+    {["all", "image", "voice"].map((type) => (
+      <button
+        key={type}
+        onClick={() => setFilterType(type)}
+        className={`rounded-xl px-4 py-2 text-sm transition ${
+          filterType === type
+            ? "bg-teal-700 text-white"
+            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+        }`}
+      >
+        {type.charAt(0).toUpperCase() + type.slice(1)}
+      </button>
+    ))}
+  </div>
+</div>
+
     {/* MESSAGES */}
     <div
       ref={containerRef}
@@ -307,7 +436,22 @@ return (
         return (
           <div
             key={i}
-            className={`flex ${
+            ref={
+              searchQuery &&
+              msg.text?.toLowerCase().includes(searchQuery.toLowerCase())
+                ? matchedMessageRef
+                : null
+            }
+            onMouseEnter={() => setActiveMessageId(msg.id || null)}
+            onMouseLeave={() => setActiveMessageId(null)}
+            onClick={() =>
+              setActiveMessageId(
+                activeMessageId === msg.id
+                  ? null
+                  : msg.id || null
+              )
+            }
+            className={`group relative flex ${
               isMe ? "justify-end" : "justify-start"
             } ${isSameUser ? "mt-1" : "mt-4"}`}
           >
@@ -333,12 +477,45 @@ return (
                 </p>
               )}
 
+              {/* REPLIED MESSAGE */}
+              {msg.replyTo && (
+                <div className="mb-2 rounded-xl border-l-4 border-teal-300 bg-black/10 px-3 py-2 text-xs">
+                  <p className="font-semibold text-teal-200">
+                    {msg.replyTo.user}
+                  </p>
+
+                <p className="truncate text-slate-200">
+                  {msg.replyTo.text}
+                </p>
+              </div>
+            )}
+
               {/* TEXT */}
               {msg.text && (
                 <p className="break-words text-sm leading-relaxed">
-                  {msg.text}
-                </p>
+                  {searchQuery &&
+                    msg.text.toLowerCase().includes(searchQuery.toLowerCase()) ? (
+                <>
+                  {msg.text
+                    .split(new RegExp(`(${searchQuery})`, "gi"))
+                    .map((part, index) =>
+                      part.toLowerCase() === searchQuery.toLowerCase() ? (
+                  <span
+                    key={index}
+                    className="rounded bg-yellow-300 px-1 text-black"
+                  >
+                    {part}
+                  </span>
+                    ) : (
+                    part
+                  )
               )}
+            </>
+          ) : (
+            msg.text
+        )}
+      </p>
+    )}
 
               {/* IMAGE */}
               {msg.image && msg.image.startsWith("blob:") && (
@@ -357,6 +534,63 @@ return (
                   />
                 </audio>
               )}
+
+
+              {/* MESSAGE ACTIONS */}
+            <div
+              className={`
+                mb-2 flex flex-wrap gap-2 text-xs transition-all duration-200
+                ${
+                  activeMessageId === msg.id
+                    ? "opacity-100"
+                    : "opacity-0 group-hover:opacity-100"
+                }
+              `}
+            >
+
+              <button
+                onClick={() => handleReply(msg)}
+                className="hover:underline"
+              >
+                Reply
+              </button>
+
+              <button
+                onClick={() => handlePin(msg.id)}
+                className="hover:underline"
+              >
+                {msg.isPinned ? "Unpin" : "Pin"}
+              </button>
+
+              {msg.text && (
+                <>
+                  <button
+                    onClick={() => handleCopy(msg.text)}
+                    className="hover:underline"
+                  >
+                    Copy
+                  </button>
+
+                  {isMe && (
+                    <button
+                      onClick={() => handleEdit(msg.id, msg.text)}
+                      className="hover:underline"
+                    >
+                      Edit
+                    </button>
+                  )}
+                </>
+              )}
+
+              {isMe && (
+                <button
+                  onClick={() => handleDelete(msg.id)}
+                  className="text-red-300 hover:underline"
+                >
+                Delete
+              </button>
+            )}
+          </div>
 
               {/* REACTIONS */}
               <div className="mt-2 flex flex-wrap gap-2 text-sm">
@@ -458,6 +692,48 @@ return (
       </div>
     )}
 
+    {/* REPLY PREVIEW */}
+    {replyingTo && (
+      <div className="flex items-center justify-between rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm shadow-sm">
+        <div>
+          <p className="font-semibold text-teal-700">
+            Replying to {replyingTo.user}
+          </p>
+
+          <p className="truncate text-slate-600">
+            {replyingTo.text}
+          </p>
+        </div>
+
+        <button
+          onClick={() => setReplyingTo(null)}
+          className="text-sm font-medium text-teal-700 hover:underline"
+        >
+          Cancel
+        </button>
+      </div>
+    )}
+
+    {/* EDITING MESSAGE */}
+    {editingMessageId && (
+      <div className="flex items-center justify-between rounded-2xl border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-700 shadow-sm">
+        <span>
+          Editing message...
+        </span>
+
+        <button
+          onClick={() => {
+            setEditingMessageId(null);
+            setEditedText("");
+            setInput("");
+          }}
+          className="font-medium hover:underline"
+        >
+          Cancel
+        </button>
+      </div>
+    )}
+
     {/* INPUT SECTION */}
     <div className="relative mt-4 flex gap-3">
 
@@ -523,7 +799,11 @@ return (
       <input
         value={input}
         onChange={handleTyping}
-        placeholder="Type message"
+        placeholder={
+          editingMessageId
+            ? "Edit your message..."
+            : "Type message"
+        }
         className="flex-1 rounded-2xl border border-(--line) bg-white px-4 py-3 text-sm shadow-sm outline-none focus:border-slate-400"
       />
 
