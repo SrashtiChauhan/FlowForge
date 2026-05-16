@@ -25,10 +25,10 @@ export default function ChatPage() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
-const [audioBlob, setAudioBlob] = useState<string | null>(null);
+  const [audioBlob, setAudioBlob] = useState<string | null>(null);
 
-const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-const audioChunksRef = useRef<Blob[]>([]);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   const socketRef = useRef<Socket | null>(null);
   const typingTimeoutRef = useRef<any>(null);
@@ -51,6 +51,8 @@ const audioChunksRef = useRef<Blob[]>([]);
           id: msg.id,
           user: msg.username,
           text: msg.text,
+          image: msg.image || undefined,
+          audio: msg.audio || undefined,
           time: new Date(msg.created_at).toLocaleTimeString(),
           status: msg.status || "sent",
         }));
@@ -59,19 +61,30 @@ const audioChunksRef = useRef<Blob[]>([]);
 
 // NEW MESSAGE
 socket.on("newMessage", (msg) => {
-  // prevent duplicate message for sender
-  if (msg.username === username) return;
+  setMessages((prev) => {
+    const alreadyExists = prev.some(
+      (m) =>
+        m.user === msg.username &&
+        m.text === msg.text &&
+        m.image === msg.image &&
+        m.audio === msg.audio
+    );
 
-  setMessages((prev) => [
-    ...prev,
-    {
-      id: msg.id,
-      user: msg.username,
-      text: msg.text,
-      time: new Date(msg.created_at).toLocaleTimeString(),
-      status: msg.status,
-    },
-  ]);
+    if (alreadyExists) return prev;
+
+    return [
+      ...prev,
+      {
+        id: msg.id,
+        user: msg.username,
+        text: msg.text,
+        image: msg.image || undefined,
+        audio: msg.audio || undefined,
+        time: new Date(msg.created_at).toLocaleTimeString(),
+        status: msg.status,
+      },
+    ];
+  });
 
   if (!isAtBottomRef.current) {
     setUnreadCount((prev) => prev + 1);
@@ -142,18 +155,22 @@ socket.on("newMessage", (msg) => {
   async function handleSend() {
   if ((!input.trim() && !selectedImage && !audioBlob) || !username.trim()) return;
 
+
+  const currentImage = selectedImage;
+  const currentAudio = audioBlob;
   const localMessage: Message = {
   id: Date.now().toString(),
   user: username,
   text: input,
-  image: selectedImage || undefined,
-  audio: audioBlob || undefined,
   time: new Date().toLocaleTimeString(),
   status: "sent",
+  
+
+  ...(currentImage && { image: currentImage }),
+  ...(currentAudio && { audio: currentAudio }),
 };
 
-  // immediately show message in UI
-  setMessages((prev) => [...prev, localMessage]);
+  
 
   // send text to backend
   await fetch("http://localhost:5000/api/chat", {
@@ -164,6 +181,8 @@ socket.on("newMessage", (msg) => {
     body: JSON.stringify({
       text: input,
       username,
+      image: currentImage,
+      audio: currentAudio,
     }),
   });
 
@@ -195,8 +214,13 @@ socket.on("newMessage", (msg) => {
 
     if (!file) return;
 
-        const imageUrl = URL.createObjectURL(file);
-        setSelectedImage(imageUrl);
+      const reader = new FileReader();
+
+      reader.onloadend = () => {
+        setSelectedImage(reader.result as string);
+      };
+
+      reader.readAsDataURL(file);
   }
 
   async function startRecording() {
@@ -216,13 +240,17 @@ socket.on("newMessage", (msg) => {
     };
 
     mediaRecorder.onstop = () => {
-      const audioBlob = new Blob(audioChunksRef.current, {
+      const blob = new Blob(audioChunksRef.current, {
         type: "audio/webm",
       });
 
-      const audioUrl = URL.createObjectURL(audioBlob);
+      const reader = new FileReader();
 
-      setAudioBlob(audioUrl);
+      reader.onloadend = () => {
+        setAudioBlob(reader.result as string);
+      };
+
+      reader.readAsDataURL(blob);
     };
 
     mediaRecorder.start();
@@ -341,12 +369,12 @@ return (
               )}
 
               {/* IMAGE */}
-              {msg.image && msg.image.startsWith("blob:") && (
+              {msg.image && (
                 <img src={msg.image} alt="Shared image" className="mt-3 max-h-52 max-w-[240px] rounded-xl object-cover"/>
               )}
 
               {/* AUDIO */}
-              {msg.audio && msg.audio.startsWith("blob:") && (
+              {msg.audio && (
                 <audio
                   controls
                   className="mt-3 w-[220px]"

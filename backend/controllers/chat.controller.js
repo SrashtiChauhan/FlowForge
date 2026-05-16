@@ -13,30 +13,32 @@ export const getMessages = async (req, res) => {
 
 export const sendMessage = async (req, res) => {
   try {
-    const { text, username } = req.body;
+    const { text, username, image, audio } = req.body;
 
-    console.log("Incoming:", text, username);
+    console.log("Incoming:", {
+      text,
+      username,
+      image,
+      audio,
+    });
 
-    if (!text || !username) {
-      return res.status(400).json({ error: "Text & username required" });
+    if ((!text && !image && !audio) || !username) {
+      return res.status(400).json({error: "Message content & username required",});
     }
 
     const { data, error } = await supabase
       .from("messages")
-      .insert([{ text, username, status: "sent" }])
+      .insert([{ text, username, image, audio, status: "sent" }])
       .select();
 
     if (error) {
       console.error("Supabase error:", error);
       return res.status(500).json({ error: error.message });
     }
-
     const io = req.app.get("io");
 
-    io.emit("newMessage", {
-      ...data[0],
-      status: "delivered",
-    });
+    io.emit("newMessage", data[0]);
+
 
     res.json(data);
   } catch (err) {
