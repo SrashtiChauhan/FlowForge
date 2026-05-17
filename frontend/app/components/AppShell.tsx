@@ -12,7 +12,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       {!isPublicRoute && <Sidebar />}
-      <main className={isPublicRoute ? "flex-1" : "flex-1 p-6"}>{children}</main>
+     <main className={isPublicRoute ? "min-w-0 flex-1 overflow-x-hidden" : "min-w-0 flex-1 overflow-x-hidden p-6"}>{children}</main>
     </div>
   );
 }
