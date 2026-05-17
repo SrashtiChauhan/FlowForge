@@ -32,6 +32,14 @@ export default function ChatPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<string | null>(null);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState("all");
+  const [activeMessageId, setActiveMessageId] = useState<string | null>(null);
+  const matchedMessageRef = useRef<HTMLDivElement | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editedText, setEditedText] = useState("");
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
@@ -53,6 +61,11 @@ export default function ChatPage() {
     fetch("http://localhost:5000/api/chat")
       .then((res) => res.json())
       .then((data) => {
+        if (!Array.isArray(data)) {
+          console.error("Invalid messages response:", data);
+          return;
+        }
+
         const formatted = data.map((msg: any) => ({
           id: msg.id,
           user: msg.username,
@@ -345,11 +358,11 @@ const filteredMessages = messages.filter((msg) => {
 
 
 return (
-  <div className="mx-auto relative flex max-w-6xl flex-col gap-6 p-6 md:p-10">
+  <div className="mx-auto flex h-[calc(100vh-48px)] w-full max-w-6xl flex-col gap-4 overflow-hidden p-3 sm:p-6 md:p-10">
 
     {/* HEADER */}
-    <div className="rounded-3xl border border-(--line) bg-white p-6 shadow-sm">
-      <h1 className="text-3xl font-bold text-slate-800">
+    <div className="rounded-3xl border border-(--line) bg-white p-4 sm:p-6 shadow-sm">
+      <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">
         Team Chat
       </h1>
 
@@ -424,7 +437,6 @@ return (
         if (!el) return;
 
         const threshold = 100;
-
         const atBottom =
           el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
 
@@ -434,8 +446,7 @@ return (
           setUnreadCount(0);
         }
       }}
-      className="h-[500px] overflow-y-auto rounded-3xl border border-(--line) bg-white p-5 shadow-sm"
-    >
+      className="h-[55vh] overflow-y-auto rounded-3xl border border-(--line) bg-white p-4 shadow-sm sm:h-[65vh] sm:p-5">
       {filteredMessages.map((msg, i) => {
         const prevMsg = filteredMessages[i - 1];
         const isSameUser = prevMsg && prevMsg.user === msg.user;
@@ -464,7 +475,7 @@ return (
             } ${isSameUser ? "mt-1" : "mt-4"}`}
           >
             <div
-              className={`w-fit max-w-[320px] rounded-2xl p-4 shadow-sm ${
+              className={`w-fit max-w-[85%] sm:max-w-[320px] rounded-2xl p-4 shadow-sm ${
                 isMe
                   ? `bg-teal-700 text-white ${
                       isSameUser
@@ -527,14 +538,14 @@ return (
 
               {/* IMAGE */}
               {msg.image && (
-                <img src={msg.image} alt="Shared image" className="mt-3 max-h-52 max-w-[240px] rounded-xl object-cover"/>
+                <img src={msg.image} alt="Shared image" className="mt-3 max-h-52 w-full max-w-full rounded-xl object-cover"/>
               )}
 
               {/* AUDIO */}
               {msg.audio && (
                 <audio
                   controls
-                  className="mt-3 w-[220px]"
+                  className="mt-3 max-w-full"
                 >
                   <source
                     src={msg.audio}
@@ -755,7 +766,7 @@ return (
     )}
 
     {/* INPUT SECTION */}
-    <div className="relative mt-4 flex gap-3">
+   <div className="relative mt-4 flex w-full shrink-0 items-center gap-2 sm:gap-3">
 
       {/* EMOJI */}
       <div className="relative">
@@ -824,7 +835,7 @@ return (
             ? "Edit your message..."
             : "Type message"
         }
-        className="flex-1 rounded-2xl border border-(--line) bg-white px-4 py-3 text-sm shadow-sm outline-none focus:border-slate-400"
+        className="min-w-[140px] flex-1 rounded-2xl border border-(--line) bg-white px-4 py-3 text-sm shadow-sm outline-none focus:border-slate-400"
       />
 
       {/* SEND BUTTON */}

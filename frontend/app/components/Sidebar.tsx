@@ -22,13 +22,13 @@ export default function Sidebar() {
     }`;
 
   return (
-    <aside className="panel sticky top-0 z-20 m-4 mb-0 p-3 md:m-6 md:mb-6 md:h-[calc(100vh-3rem)] md:w-64 md:p-4">
+    <aside className="panel sticky top-0 z-20 m-2 mb-0 w-[140px] p-3 sm:m-4 sm:w-[180px] md:m-6 md:mb-6 md:h-[calc(100vh-3rem)] md:w-64 md:p-4">
       <div className="mb-4 flex items-center justify-between md:mb-6 md:block">
         <h1 className="text-xl font-bold tracking-tight text-slate-900 md:text-2xl">FlowForge</h1>
         <span className="chip px-3 py-1 text-xs font-semibold">v1</span>
       </div>
 
-      <nav className="grid grid-cols-2 gap-2 md:grid-cols-1">
+      <nav className="flex flex-col gap-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
